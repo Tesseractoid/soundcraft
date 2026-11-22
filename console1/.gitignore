@@ -2,3 +2,4 @@
 __pycache__/
 *.log
 raw_log.jsonl
+monitor_log.txt
