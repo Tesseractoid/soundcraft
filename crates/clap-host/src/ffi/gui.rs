@@ -213,8 +213,9 @@ impl GuiLink {
             None => true,
         };
         if !shown {
-            GuiLink::destroy(g);
-            return Err("the plugin could not show its editor".into());
+            // An embedded GUI is on screen once it is parented and its host window shown; some
+            // plugins (every nih-plug one) answer `show` with false for embedded editors.
+            log::debug!("clap: embedded editor's show() returned false; showing its window anyway");
         }
         if let Some(win) = &g.window {
             win.raise();
