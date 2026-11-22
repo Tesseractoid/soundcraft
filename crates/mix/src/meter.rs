@@ -1,4 +1,5 @@
 use super::instances::PluginFailures;
+use soundcraft_model::INSERT_SLOTS;
 
 /// Peak meter values for one strip (linear, per channel). [`MixEngine`] measures one block; a
 /// realtime host folds blocks together with [`StripMeter::accumulate`] so a reader polling less
@@ -11,6 +12,10 @@ pub struct StripMeter {
     pub peaks: Vec<f32>,
     /// Gain reduction of the first dynamics insert, dB.
     pub gain_reduction_db: f32,
+    /// Peak entering the inserts (after input trim and polarity), first two channels like `peak`.
+    pub input_peak: [f32; 2],
+    /// Gain reduction of every insert slot, dB (0 for empty, bypassed or non-dynamics slots).
+    pub insert_gain_reduction_db: [f32; INSERT_SLOTS],
     pub plugin_failures: PluginFailures,
 }
 
@@ -20,6 +25,8 @@ impl StripMeter {
         self.peak = o.peak;
         self.peaks.clone_from(&o.peaks);
         self.gain_reduction_db = o.gain_reduction_db;
+        self.input_peak = o.input_peak;
+        self.insert_gain_reduction_db = o.insert_gain_reduction_db;
         self.plugin_failures = o.plugin_failures;
     }
 
@@ -40,6 +47,12 @@ impl StripMeter {
             }
         }
         self.gain_reduction_db = max_level(self.gain_reduction_db, o.gain_reduction_db);
+        for (p, q) in self.input_peak.iter_mut().zip(o.input_peak) {
+            *p = max_level(*p, q);
+        }
+        for (g, h) in self.insert_gain_reduction_db.iter_mut().zip(o.insert_gain_reduction_db) {
+            *g = max_level(*g, h);
+        }
         self.plugin_failures = o.plugin_failures;
     }
 
@@ -49,6 +62,8 @@ impl StripMeter {
         self.peak = [0.0; 2];
         self.peaks.iter_mut().for_each(|p| *p = 0.0);
         self.gain_reduction_db = 0.0;
+        self.input_peak = [0.0; 2];
+        self.insert_gain_reduction_db = [0.0; INSERT_SLOTS];
     }
 
     pub(crate) fn measure(&mut self, bufs: &[Vec<f32>], frames: usize, gr: f32) {
@@ -62,6 +77,13 @@ impl StripMeter {
         self.peak = [self.peaks.first().copied().unwrap_or(0.0), self.peaks.get(1.min(last)).copied().unwrap_or(0.0)];
         self.gain_reduction_db = gr;
     }
+}
+
+/// Peaks of the first two channels of a block (a mono block repeats channel 0), for the input meter.
+pub(crate) fn first_two_peaks(bufs: &[Vec<f32>], frames: usize) -> [f32; 2] {
+    let ch = |i: usize| bufs.get(i).map_or(0.0, |b| peak(b.get(..frames).unwrap_or(&[])));
+    let first = ch(0);
+    [first, if bufs.len() >= 2 { ch(1) } else { first }]
 }
 
 /// The larger of two meter levels; a NaN (from a misbehaving plugin) never wins or sticks.

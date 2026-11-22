@@ -2135,3 +2135,56 @@ fn a_clip_volume_moved_earlier_by_the_track_delay_counts_as_set_when_a_device_go
     render_block(&mut eng, &s, 1024);
     assert_eq!(std::mem::take(&mut *heard.lock().unwrap()), vec![(0, [0xB0, 121, 0]), (0, [0xB0, 7, 80])], "the clip's volume, not the default");
 }
+
+#[test]
+fn input_meter_reads_after_trim_and_each_insert_reports_its_own_gain_reduction() {
+    // A controller's channel strip needs the level entering the inserts (after trim), the level
+    // leaving the strip, and the gain reduction of each dynamics insert separately (a gate in one
+    // slot and a compressor in another), not only the first one.
+    let (mut s, t) = session_with_dc(0.5, 4800);
+    {
+        let tr = s.track_mut(t).unwrap();
+        tr.mixer.trim_db = -6.0;
+        tr.mixer.volume_db = -20.0;
+        let mut comp = Insert::new("compressor");
+        comp.params.insert("threshold".into(), -40.0);
+        comp.params.insert("ratio".into(), 10.0);
+        comp.params.insert("attack".into(), 0.01);
+        tr.mixer.inserts[0] = Some(Insert::new("gain"));
+        tr.mixer.inserts[2] = Some(comp);
+    }
+    let mut eng = MixEngine::new(48_000.0, 512);
+    let mut buf = vec![vec![0.0; 512]; 2];
+    for blk in 0..8 {
+        eng.render(&s, blk * 512, 512, &mut buf);
+    }
+    let m = eng.meters.get(&t).unwrap();
+    let after_trim = 0.5 * db_to_gain(-6.0);
+    assert!((m.input_peak[0] - after_trim).abs() < 1e-4, "input {} vs {after_trim}", m.input_peak[0]);
+    assert_eq!(m.input_peak[0], m.input_peak[1], "a mono strip repeats its channel");
+    assert!(m.peak[0] < after_trim * db_to_gain(-20.0), "the output is after the compressor and fader: {}", m.peak[0]);
+    assert_eq!(m.insert_gain_reduction_db[0], 0.0, "the gain plug-in reduces nothing");
+    assert!(m.insert_gain_reduction_db[2] > 1.0, "compressor slot: {}", m.insert_gain_reduction_db[2]);
+    assert_eq!(m.gain_reduction_db, m.insert_gain_reduction_db[2], "the first dynamics insert is unchanged");
+
+    // Bypassing the compressor clears its reading.
+    s.track_mut(t).unwrap().mixer.inserts[2].as_mut().unwrap().bypass = true;
+    eng.render(&s, 8 * 512, 512, &mut buf);
+    assert_eq!(eng.meters.get(&t).unwrap().insert_gain_reduction_db[2], 0.0);
+}
+
+#[test]
+fn input_peak_and_insert_gain_reduction_accumulate_and_reset() {
+    let mut acc = StripMeter { input_peak: [0.2, 0.1], ..StripMeter::default() };
+    acc.insert_gain_reduction_db[3] = 2.0;
+    let mut later = StripMeter { input_peak: [0.1, 0.4], ..StripMeter::default() };
+    later.insert_gain_reduction_db[3] = 5.0;
+    later.insert_gain_reduction_db[4] = f32::NAN;
+    acc.accumulate(&later);
+    assert_eq!(acc.input_peak, [0.2, 0.4]);
+    assert_eq!(acc.insert_gain_reduction_db[3], 5.0);
+    assert_eq!(acc.insert_gain_reduction_db[4], 0.0, "a NaN never sticks");
+    acc.reset_levels();
+    assert_eq!(acc.input_peak, [0.0; 2]);
+    assert!(acc.insert_gain_reduction_db.iter().all(|g| *g == 0.0));
+}

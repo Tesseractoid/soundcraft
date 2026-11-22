@@ -435,6 +435,45 @@ fn command_list(app: &mut SoundApp, p: &Value) -> Value {
     ok(list)
 }
 
+/// Linear peak to dBFS for the control channel: silence (and anything not finite) is -144.
+fn meter_db(x: f32) -> f32 {
+    if x.is_finite() && x > 1e-7 { ((20.0 * x.log10()) * 10.0).round() / 10.0 } else { -144.0 }
+}
+
+/// `mix.meters`: the levels the Mix window draws, for hardware controllers. Per track: the peak
+/// entering the inserts (`input_db`, after trim), the strip's output (`output_db`, where the
+/// track meter reads), and gain reduction for the first dynamics insert and for each insert
+/// slot. Peaks are the highest since the UI's last meter poll. `live` is false while nothing
+/// plays or is monitored; levels then read silence.
+fn meters(app: &SoundApp) -> Value {
+    let live = app.player.is_some() && app.meters_live();
+    let snap = &app.meter_snapshot;
+    let pair = |p: [f32; 2]| [meter_db(p[0]), meter_db(p[1])];
+    let tracks: Vec<Value> = app
+        .engine
+        .session()
+        .tracks
+        .iter()
+        .filter_map(|t| {
+            let m = snap.tracks.get(&t.id)?;
+            let inserts: Vec<Value> = t
+                .mixer
+                .inserts
+                .iter()
+                .enumerate()
+                .filter(|(_, ins)| ins.is_some())
+                .map(|(slot, _)| json!({"slot": slot, "gain_reduction_db": m.insert_gain_reduction_db.get(slot).copied().unwrap_or(0.0)}))
+                .collect();
+            Some(json!({
+                "id": t.id, "name": t.name,
+                "input_db": pair(m.input_peak), "output_db": pair(m.peak),
+                "gain_reduction_db": m.gain_reduction_db, "inserts": inserts,
+            }))
+        })
+        .collect();
+    json!({"live": live, "tracks": tracks, "main": {"output_db": pair(snap.main.peak)}})
+}
+
 /// Dispatch one control method to commands, inspection, menus or queued scripted input. Methods that need a UI pass
 /// return `None` and reply later; everything else returns the reply for [`drain`] to send.
 fn handle(app: &mut SoundApp, ctx: &egui::Context, req: &ControlRequest) -> Option<Value> {
@@ -456,6 +495,7 @@ fn handle(app: &mut SoundApp, ctx: &egui::Context, req: &ControlRequest) -> Opti
         "session.inspect" | "document.inspect" => {
             ok(soundcraft_engine::inspect::session(&app.engine, p.get("detail").and_then(Value::as_str) == Some("full")))
         }
+        "mix.meters" => ok(meters(app)),
         "ui.inspect" => {
             let mut v = app.inspect(ctx);
             v["edit_layout"] = json!(app.edit_layout);
