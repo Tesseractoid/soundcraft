@@ -89,8 +89,32 @@ pub fn floating(app: &mut SoundApp, ctx: &egui::Context) {
     transport_window(app, ctx);
     big_counter(app, ctx);
     plugin_windows(app, ctx);
+    plugin_editors(app);
     crate::mix_window::send_window(app, ctx);
     crate::mix_window::output_window(app, ctx);
     about(app, ctx);
     session_info(app, ctx);
+}
+
+/// Opens and closes hosted plug-in editors to match `ui.plugin_editors` (set by a hardware
+/// controller through `ui.set`). Only editors opened this way are ever closed by it.
+fn plugin_editors(app: &mut SoundApp) {
+    let Some(p) = app.player.as_ref() else { return };
+    let want = app.ui.plugin_editors.clone();
+    let mut opened = std::mem::take(&mut app.ui.plugin_editors_opened);
+    opened.retain(|&(t, s)| {
+        if want.contains(&(t, s)) {
+            return true;
+        }
+        if p.editor_open(t, s) {
+            p.close_editor(t, s);
+        }
+        false
+    });
+    for &(t, s) in &want {
+        if !opened.contains(&(t, s)) && p.has_editor(t, s) && !p.editor_open(t, s) && p.open_editor(t, s).is_ok() {
+            opened.push((t, s));
+        }
+    }
+    app.ui.plugin_editors_opened = opened;
 }

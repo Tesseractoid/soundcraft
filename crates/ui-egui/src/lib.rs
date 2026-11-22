@@ -101,6 +101,12 @@ pub struct UiState {
     pub track_tint: f32,
     /// Open plugin windows (track, slot).
     pub plugin_windows: Vec<(TrackId, usize)>,
+    /// Hosted plug-ins whose own editor (a native window) a controller wants open (track, slot).
+    /// Set through `ui.set`; editors opened this way close again when they leave the list.
+    pub plugin_editors: Vec<(TrackId, usize)>,
+    /// The editors opened because of `plugin_editors`, so only those are closed by it.
+    #[serde(skip)]
+    pub plugin_editors_opened: Vec<(TrackId, usize)>,
     /// The send in the Send window (track, slot).
     #[serde(skip)]
     pub send_window: Option<(TrackId, usize)>,
@@ -185,6 +191,8 @@ impl Default for UiState {
             edit_views: vec!["color".into()],
             track_tint: 0.5,
             plugin_windows: Vec::new(),
+            plugin_editors: Vec::new(),
+            plugin_editors_opened: Vec::new(),
             send_window: None,
             output_window: None,
             audiosuite: None,

@@ -215,34 +215,37 @@ class Controller:
         elif mode == "inspect":
             self.sc.call("ui.inspect")
 
-    def plugin_windows(self):
+    def plugin_windows(self, key="plugin_windows"):
         r = self.sc.call("ui.inspect") or {}
-        return [list(w) for w in (r.get("ui") or {}).get("plugin_windows") or []]
+        return [list(w) for w in (r.get("ui") or {}).get(key) or []]
 
-    def show_plugin(self, tid, slot):
+    def show_plugin(self, tid, slot, section=None):
+        """Pop up the plug-in being adjusted: a hosted plug-in's own editor (e.g. AK 4K EQ's panel),
+        else SoundCraft's plug-in window."""
         cfg = LAYOUT.get("plugin_popup", {})
         if not cfg.get("enabled", True):
             return
+        key = "plugin_editors" if section and _clap(section) else "plugin_windows"
         now = time.time()
-        if self.popup and self.popup[:2] == [tid, slot]:
+        if self.popup and self.popup[:2] == [tid, slot] and self.popup[4] == key:
             self.popup[3] = now
             return
         self.hide_plugin()
-        wins = self.plugin_windows()
-        key = [tid, slot]
-        opened = key not in wins
-        wins = [w for w in wins if w != key] + [key]       # last in the list = in front
-        self.sc.call("ui.set", {"plugin_windows": wins})
-        self.popup = [tid, slot, opened, now]
+        wins = self.plugin_windows(key)
+        want = [tid, slot]
+        opened = want not in wins
+        wins = [w for w in wins if w != want] + [want]       # last in the list = in front
+        self.sc.call("ui.set", {key: wins})
+        self.popup = [tid, slot, opened, now, key]
 
     def hide_plugin(self):
         if not self.popup:
             return
-        tid, slot, opened, _ = self.popup
+        tid, slot, opened, _, key = self.popup
         self.popup = None
         if opened:                                          # only close windows we opened
-            wins = [w for w in self.plugin_windows() if w != [tid, slot]]
-            self.sc.call("ui.set", {"plugin_windows": wins})
+            wins = [w for w in self.plugin_windows(key) if w != [tid, slot]]
+            self.sc.call("ui.set", {key: wins})
 
     def automated(self, t, param):
         """True when SoundCraft is playing back automation for this control, so knob moves won't stick."""
@@ -472,7 +475,7 @@ class Controller:
             if ins:
                 self.sc.cmd("mix.insert_params", track=tid, slot=ins["slot"], params=to_plugin(spec["section"], params))
                 if show:
-                    self.show_plugin(tid, ins["slot"])
+                    self.show_plugin(tid, ins["slot"], spec["section"])
 
     def send_of(self, t, slot):
         return next((x for x in t.get("sends") or [] if x and x.get("slot") == slot), None)
