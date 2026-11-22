@@ -83,17 +83,17 @@ fn curve(ui: &mut egui::Ui, s: &dsp::Settings) {
     // grid
     for f in [50.0, 100.0, 200.0, 500.0, 1000.0, 2000.0, 5000.0, 10_000.0] {
         let x = x_of(f);
-        p.line_segment([Pos2::new(x, rect.top()), Pos2::new(x, rect.bottom())], Stroke::new(1.0, GRID));
+        p.line_segment([Pos2::new(x, rect.top()), Pos2::new(x, rect.bottom())], Stroke::new(1.0_f32, GRID));
         let label = if f >= 1000.0 { format!("{}k", f / 1000.0) } else { format!("{f}") };
         p.text(Pos2::new(x + 3.0, rect.bottom() - 4.0), Align2::LEFT_BOTTOM, label, FontId::proportional(9.0), INK_SOFT);
     }
     for db in [-12.0, -6.0, 6.0, 12.0] {
         let y = y_of(db);
-        p.line_segment([Pos2::new(rect.left(), y), Pos2::new(rect.right(), y)], Stroke::new(1.0, GRID));
+        p.line_segment([Pos2::new(rect.left(), y), Pos2::new(rect.right(), y)], Stroke::new(1.0_f32, GRID));
         p.text(Pos2::new(rect.left() + 4.0, y - 1.0), Align2::LEFT_BOTTOM, format!("{db:+}"), FontId::proportional(9.0), INK_SOFT);
     }
     let y0 = y_of(0.0);
-    p.line_segment([Pos2::new(rect.left(), y0), Pos2::new(rect.right(), y0)], Stroke::new(1.0, INK_SOFT));
+    p.line_segment([Pos2::new(rect.left(), y0), Pos2::new(rect.right(), y0)], Stroke::new(1.0_f32, INK_SOFT));
 
     // response
     let n = 240;
@@ -104,7 +104,7 @@ fn curve(ui: &mut egui::Ui, s: &dsp::Settings) {
         })
         .collect();
     let col = if s.eq_in { CURVE } else { CURVE.gamma_multiply(0.45) };
-    p.add(Shape::line(points, Stroke::new(2.2, col)));
+    p.add(Shape::line(points, Stroke::new(2.2_f32, col)));
 }
 
 // ---------------------------------------------------------------------------
@@ -219,18 +219,18 @@ fn knob<P: Param>(ui: &mut egui::Ui, param: &P, setter: &ParamSetter, label: &st
             })
             .collect()
     };
-    p.add(Shape::line(arc(0.0, 1.0, r + 3.0), Stroke::new(2.0, GRID)));
-    p.add(Shape::line(arc(0.0, v, r + 3.0), Stroke::new(2.0, CURVE)));
+    p.add(Shape::line(arc(0.0, 1.0, r + 3.0), Stroke::new(2.0_f32, GRID)));
+    p.add(Shape::line(arc(0.0, v, r + 3.0), Stroke::new(2.0_f32, CURVE)));
 
     // body and cap
     let hovered = resp.hovered() || resp.dragged();
     p.circle_filled(center, r, Color32::from_rgb(0x22, 0x22, 0x24));
     p.circle_filled(center, r * 0.62, cap);
-    p.circle_stroke(center, r, Stroke::new(1.0, if hovered { INK_SOFT } else { GRID }));
+    p.circle_stroke(center, r, Stroke::new(1.0_f32, if hovered { INK_SOFT } else { GRID }));
     let a = start + sweep * v;
     p.line_segment(
         [center + Vec2::angled(a) * (r * 0.25), center + Vec2::angled(a) * (r - 2.0)],
-        Stroke::new(2.0, INK),
+        Stroke::new(2.0_f32, INK),
     );
 
     // label + value

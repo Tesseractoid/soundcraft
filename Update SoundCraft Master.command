@@ -41,8 +41,13 @@ cp -R "$EQB/target/bundled/AK 4K EQ.vst3" "$HOME/Library/Audio/Plug-Ins/VST3/" |
 say "    -> installed (CLAP + VST3)"
 
 say "3/3 Console 1 controller packages"
-if [ ! -x console1/.venv/bin/python ]; then run python3 -m venv console1/.venv || fail "making console1/.venv"; fi
-run console1/.venv/bin/python -m pip install -q mido python-rtmidi || fail "installing mido / python-rtmidi"
+# Uses Apple's own Python (the one the controller has always used); a newer Homebrew Python
+# can't always set itself up. A half-made .venv is rebuilt.
+if ! console1/.venv/bin/python -m pip --version >/dev/null 2>&1; then
+  run /usr/bin/python3 -m venv --clear console1/.venv || fail "making console1/.venv"
+fi
+console1/.venv/bin/python -c "import mido, rtmidi" 2>/dev/null \
+  || run console1/.venv/bin/python -m pip install -q mido python-rtmidi || fail "installing mido / python-rtmidi"
 
 say "ALL DONE"
 osascript -e 'display notification "SoundCraft master and AK 4K EQ are up to date." with title "SoundCraft master"' >/dev/null 2>&1
