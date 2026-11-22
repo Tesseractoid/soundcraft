@@ -112,6 +112,45 @@ def value_to_knob(spec, v):
     return int(round(t * 127))
 
 
+# ---------- CLAP plug-ins (AK 4K EQ) ----------
+# A hosted CLAP plug-in's parameters are addressed by number and take 0..1 values. A section with
+# "clap_params" maps our own parameter names and real units (dB, Hz) to and from those.
+def _clap(section):
+    return SECTIONS.get(section, {}).get("clap_params")
+
+
+def _to_norm(m, v):
+    if m.get("bool"):
+        return 1.0 if v >= 0.5 else 0.0
+    lo, hi = m["min"], m["max"]
+    return ((min(max(v, lo), hi) - lo) / (hi - lo)) ** (2.0 ** m.get("skew", 0.0))
+
+
+def _from_norm(m, n):
+    if m.get("bool"):
+        return 1.0 if n >= 0.5 else 0.0
+    n = min(max(n, 0.0), 1.0)
+    return m["min"] + (m["max"] - m["min"]) * n ** (1.0 / 2.0 ** m.get("skew", 0.0))
+
+
+def to_plugin(section, params):
+    cp = _clap(section)
+    if not cp:
+        return params
+    return {(str(cp[k]["id"]) if k in cp else k): (_to_norm(cp[k], v) if k in cp else v) for k, v in params.items()}
+
+
+def from_plugin(section, params):
+    cp = _clap(section)
+    if not cp:
+        return params
+    out = dict(params)
+    for name, m in cp.items():
+        raw = params.get(str(m["id"]))
+        out[name] = _from_norm(m, raw) if raw is not None else m.get("default")
+    return out
+
+
 def knob_to_db(k):          # fader-style curve: 0 = -inf, ~96 = 0 dB, 127 = +12 dB
     return -144.0 if k == 0 else max(-144.0, 12 + 96 * math.log10(k / 127.0))
 
@@ -228,6 +267,8 @@ class Controller:
         sec = SECTIONS[section]
         for ins in t.get("inserts") or []:   # use the track's own plug-in of this type, wherever it is
             if ins and ins.get("plugin") == sec["plugin"]:
+                if sec.get("clap_params"):
+                    ins = dict(ins, params=from_plugin(section, ins.get("params") or {}))
                 return ins
         return None
 
@@ -247,7 +288,7 @@ class Controller:
         if free is None:
             log(f"{t['name']}: inserts A-E are full, so {sec['plugin']} wasn't added")
             return False
-        r = self.sc.cmd("mix.insert", track=t["id"], slot=free, plugin=sec["plugin"], params=params)
+        r = self.sc.cmd("mix.insert", track=t["id"], slot=free, plugin=sec["plugin"], params=to_plugin(section, params))
         self.insert_wait[key] = time.time()
         if r is not None:
             log(f"Added {sec['plugin']} to {t['name']} (insert {chr(97 + free).upper()})")
@@ -429,7 +470,7 @@ class Controller:
                 return
             ins = self.section_insert(t, spec["section"])
             if ins:
-                self.sc.cmd("mix.insert_params", track=tid, slot=ins["slot"], params=params)
+                self.sc.cmd("mix.insert_params", track=tid, slot=ins["slot"], params=to_plugin(spec["section"], params))
                 if show:
                     self.show_plugin(tid, ins["slot"])
 
@@ -530,7 +571,7 @@ class Controller:
             for g in group:
                 ins = self.section_insert(g, spec["section"])
                 if self.ensure_section(g, spec["section"], {spec["param"]: new}) and ins:
-                    self.sc.cmd("mix.insert_param", track=g["id"], slot=ins["slot"], param=spec["param"], value=new)
+                    self.sc.cmd("mix.insert_params", track=g["id"], slot=ins["slot"], params=to_plugin(spec["section"], {spec["param"]: new}))
         self.nudge()
         self.poll(); self.feedback()
 

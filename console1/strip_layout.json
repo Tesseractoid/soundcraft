@@ -1,370 +1,518 @@
 {
-  "_about": "What each Console 1 control does in SoundCraft. Edit freely; restart the controller to apply. Knob ranges are in the plug-in's own units.",
-  "soundcraft_port": 7801,
-  "sections": {
-    "gate": {
-      "plugin": "expander_gate",
-      "insert_params": {},
-      "slot": 0
-    },
-    "eq": {
-      "plugin": "eq_7band",
-      "insert_params": {},
-      "slot": 1
-    },
-    "comp": {
-      "plugin": "compressor",
-      "insert_params": {},
-      "slot": 2
-    },
-    "drive": {
-      "plugin": "saturator",
-      "insert_params": {
-        "drive": 0.0
-      },
-      "slot": 3
-    }
+ "_about": "What each Console 1 control does in SoundCraft. Edit freely; restart the controller to apply. Knob ranges are in the plug-in's own units.",
+ "soundcraft_port": 7801,
+ "sections": {
+  "gate": {
+   "plugin": "expander_gate",
+   "insert_params": {},
+   "slot": 0
   },
-  "knobs": {
-    "Volume": {
-      "target": "volume"
+  "eq": {
+   "_about": "AK 4K EQ (Atmos Kings, black-knob console EQ). To go back to SoundCraft's stock EQ, copy 'eq_stock' over this and restore the knob ranges from git history.",
+   "plugin": "clap:com.atmos-kings.ak-4k-eq",
+   "insert_params": {},
+   "slot": 1,
+   "clap_params": {
+    "hpf_freq": {
+     "id": 103518,
+     "plugin_id": "hpf",
+     "default": 16,
+     "min": 16,
+     "max": 350,
+     "skew": -1.5
     },
-    "Pan": {
-      "target": "pan"
+    "lpf_freq": {
+     "id": 107362,
+     "plugin_id": "lpf",
+     "default": 22000,
+     "min": 3000,
+     "max": 22000,
+     "skew": -1.5
     },
-    "Input Gain": {
-      "target": "trim",
-      "min": -24,
-      "max": 24,
-      "detent": true
+    "low_shelf_gain": {
+     "id": 77222692,
+     "plugin_id": "lf_gain",
+     "default": 0,
+     "min": -15,
+     "max": 15,
+     "skew": 0
     },
-    "Low Cut": {
-      "section": "eq",
-      "param": "hpf_freq",
-      "min": 10,
-      "max": 2000,
-      "taper": "log",
-      "switch": "hpf_on",
-      "off_at": "min",
-      "default": 80.0
+    "low_shelf_freq": {
+     "id": 77209117,
+     "plugin_id": "lf_freq",
+     "default": 100,
+     "min": 30,
+     "max": 450,
+     "skew": -1.5
     },
-    "High Cut": {
-      "section": "eq",
-      "param": "lpf_freq",
-      "min": 1000,
-      "max": 20000,
-      "taper": "log",
-      "switch": "lpf_on",
-      "off_at": "max",
-      "default": 18000.0
+    "low_bell": {
+     "id": 77077672,
+     "plugin_id": "lf_bell",
+     "default": 0,
+     "bool": true
     },
-    "Gate": {
-      "section": "gate",
-      "param": "threshold",
-      "min": -80,
-      "max": 0,
-      "default": -40.0
+    "low_mid_gain": {
+     "id": 209681529,
+     "plugin_id": "lmf_gain",
+     "default": 0,
+     "min": -15,
+     "max": 15,
+     "skew": 0
     },
-    "Gate Release": {
-      "section": "gate",
-      "param": "release",
-      "min": 1,
-      "max": 4000,
-      "taper": "log",
-      "default": 100.0
+    "low_mid_freq": {
+     "id": 209667954,
+     "plugin_id": "lmf_freq",
+     "default": 600,
+     "min": 200,
+     "max": 2500,
+     "skew": -1.5
     },
-    "Sustain": {
-      "section": "gate",
-      "param": "hold",
-      "min": 0,
-      "max": 2000,
-      "default": 50.0
+    "low_mid_q": {
+     "id": 103088567,
+     "plugin_id": "lmf_q",
+     "default": 1.0,
+     "min": 0.5,
+     "max": 2.5,
+     "skew": -0.8
     },
-    "Punch": {
-      "section": "gate",
-      "param": "range",
-      "min": 0,
-      "max": 80,
-      "default": 80.0
+    "high_mid_gain": {
+     "id": 1828374781,
+     "plugin_id": "hmf_gain",
+     "default": 0,
+     "min": -15,
+     "max": 15,
+     "skew": 0
     },
-    "Low Gain": {
-      "section": "eq",
-      "param": "low_shelf_gain",
-      "min": -24,
-      "max": 24,
-      "detent": true,
-      "default": 0.0
+    "high_mid_freq": {
+     "id": 1828361206,
+     "plugin_id": "hmf_freq",
+     "default": 2500,
+     "min": 600,
+     "max": 7000,
+     "skew": -1.5
     },
-    "Low Freq": {
-      "section": "eq",
-      "param": "low_shelf_freq",
-      "min": 20,
-      "max": 1000,
-      "taper": "log",
-      "default": 100.0
+    "high_mid_q": {
+     "id": 99394483,
+     "plugin_id": "hmf_q",
+     "default": 1.0,
+     "min": 0.5,
+     "max": 2.5,
+     "skew": -0.8
     },
-    "Low Mid Gain": {
-      "section": "eq",
-      "param": "low_mid_gain",
-      "min": -24,
-      "max": 24,
-      "detent": true,
-      "default": 0.0
+    "high_shelf_gain": {
+     "id": 822175264,
+     "plugin_id": "hf_gain",
+     "default": 0,
+     "min": -15,
+     "max": 15,
+     "skew": 0
     },
-    "Low Mid Freq": {
-      "section": "eq",
-      "param": "low_mid_freq",
-      "min": 20,
-      "max": 2000,
-      "taper": "log",
-      "default": 250.0
+    "high_shelf_freq": {
+     "id": 822161689,
+     "plugin_id": "hf_freq",
+     "default": 8000,
+     "min": 1500,
+     "max": 16000,
+     "skew": -1.5
     },
-    "Low Mid Q": {
-      "section": "eq",
-      "param": "low_mid_q",
-      "min": 0.1,
-      "max": 10,
-      "taper": "log",
-      "default": 1.0
+    "high_bell": {
+     "id": 822030244,
+     "plugin_id": "hf_bell",
+     "default": 0,
+     "bool": true
     },
-    "High Mid Gain": {
-      "section": "eq",
-      "param": "high_mid_gain",
-      "min": -24,
-      "max": 24,
-      "detent": true,
-      "default": 0.0
+    "eq_in": {
+     "id": 96736664,
+     "plugin_id": "eq_in",
+     "default": 1,
+     "bool": true
     },
-    "High Mid Freq": {
-      "section": "eq",
-      "param": "high_mid_freq",
-      "min": 500,
-      "max": 20000,
-      "taper": "log",
-      "default": 4000.0
+    "analog": {
+     "id": 734128368,
+     "plugin_id": "analog",
+     "default": 1,
+     "bool": true
     },
-    "High Mid Q": {
-      "section": "eq",
-      "param": "high_mid_q",
-      "min": 0.1,
-      "max": 10,
-      "taper": "log",
-      "default": 1.0
-    },
-    "High Gain": {
-      "section": "eq",
-      "param": "high_shelf_gain",
-      "min": -24,
-      "max": 24,
-      "detent": true,
-      "default": 0.0
-    },
-    "High Freq": {
-      "section": "eq",
-      "param": "high_shelf_freq",
-      "min": 1000,
-      "max": 20000,
-      "taper": "log",
-      "default": 8000.0
-    },
-    "Threshold": {
-      "section": "comp",
-      "param": "threshold",
-      "min": 0,
-      "max": -60,
-      "default": -20.0
-    },
-    "Ratio": {
-      "section": "comp",
-      "param": "ratio",
-      "min": 1,
-      "max": 20,
-      "taper": "log",
-      "default": 4.0
-    },
-    "Attack": {
-      "section": "comp",
-      "param": "attack",
-      "min": 0.1,
-      "max": 300,
-      "taper": "log",
-      "default": 10.0
-    },
-    "Release": {
-      "section": "comp",
-      "param": "release",
-      "min": 5,
-      "max": 3000,
-      "taper": "log",
-      "default": 100.0
-    },
-    "Wet/Dry": {
-      "section": "comp",
-      "param": "mix",
-      "min": 0,
-      "max": 100,
-      "default": 100.0
-    },
-    "Drive": {
-      "section": "drive",
-      "param": "drive",
-      "min": 0,
-      "max": 36,
-      "default": 0.0
-    },
-    "Drive Character": {
-      "section": "drive",
-      "param": "tone",
-      "min": 1000,
-      "max": 20000,
-      "taper": "log",
-      "default": 20000.0
+    "output": {
+     "id": 1141971201,
+     "plugin_id": "output",
+     "default": 0,
+     "min": -18,
+     "max": 18,
+     "skew": 0
     }
+   }
   },
-  "buttons": {
-    "Mute": {
-      "target": "mute"
-    },
-    "Solo": {
-      "target": "solo"
-    },
-    "Phase Inv": {
-      "target": "phase"
-    },
-    "Shape": {
-      "target": "section",
-      "section": "gate"
-    },
-    "Equalizer": {
-      "target": "section",
-      "section": "eq"
-    },
-    "Compressor": {
-      "target": "section",
-      "section": "comp"
-    },
-    "Hard Gate": {
-      "target": "param_toggle",
-      "section": "gate",
-      "param": "ratio",
-      "on": 100,
-      "off": 4
-    },
-    "Filter To Compressor": {
-      "target": "param_toggle",
-      "section": "comp",
-      "param": "sc_hpf_on",
-      "on": 1,
-      "off": 0
-    },
-    "Page Up": {
-      "target": "bank",
-      "delta": -1
-    },
-    "Page Down": {
-      "target": "bank",
-      "delta": 1
-    }
+  "comp": {
+   "plugin": "compressor",
+   "insert_params": {},
+   "slot": 2
   },
-  "track_buttons": [
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "10",
-    "11",
-    "12",
-    "13",
-    "14",
-    "15",
-    "16",
-    "17",
-    "18",
-    "19",
-    "20"
+  "drive": {
+   "plugin": "saturator",
+   "insert_params": {
+    "drive": 0.0
+   },
+   "slot": 3
+  }
+ },
+ "knobs": {
+  "Volume": {
+   "target": "volume"
+  },
+  "Pan": {
+   "target": "pan"
+  },
+  "Input Gain": {
+   "target": "trim",
+   "min": -24,
+   "max": 24,
+   "detent": true
+  },
+  "Low Cut": {
+   "section": "eq",
+   "param": "hpf_freq",
+   "min": 16,
+   "max": 350,
+   "taper": "log",
+   "off_at": "min",
+   "default": 80.0
+  },
+  "High Cut": {
+   "section": "eq",
+   "param": "lpf_freq",
+   "min": 3000,
+   "max": 22000,
+   "taper": "log",
+   "off_at": "max",
+   "default": 22000.0
+  },
+  "Gate": {
+   "section": "gate",
+   "param": "threshold",
+   "min": -80,
+   "max": 0,
+   "default": -40.0
+  },
+  "Gate Release": {
+   "section": "gate",
+   "param": "release",
+   "min": 1,
+   "max": 4000,
+   "taper": "log",
+   "default": 100.0
+  },
+  "Sustain": {
+   "section": "gate",
+   "param": "hold",
+   "min": 0,
+   "max": 2000,
+   "default": 50.0
+  },
+  "Punch": {
+   "section": "gate",
+   "param": "range",
+   "min": 0,
+   "max": 80,
+   "default": 80.0
+  },
+  "Low Gain": {
+   "section": "eq",
+   "param": "low_shelf_gain",
+   "min": -15,
+   "max": 15,
+   "detent": true,
+   "default": 0.0
+  },
+  "Low Freq": {
+   "section": "eq",
+   "param": "low_shelf_freq",
+   "min": 30,
+   "max": 450,
+   "taper": "log",
+   "default": 100.0
+  },
+  "Low Mid Gain": {
+   "section": "eq",
+   "param": "low_mid_gain",
+   "min": -15,
+   "max": 15,
+   "detent": true,
+   "default": 0.0
+  },
+  "Low Mid Freq": {
+   "section": "eq",
+   "param": "low_mid_freq",
+   "min": 200,
+   "max": 2500,
+   "taper": "log",
+   "default": 600.0
+  },
+  "Low Mid Q": {
+   "section": "eq",
+   "param": "low_mid_q",
+   "min": 0.5,
+   "max": 2.5,
+   "taper": "log",
+   "default": 1.0
+  },
+  "High Mid Gain": {
+   "section": "eq",
+   "param": "high_mid_gain",
+   "min": -15,
+   "max": 15,
+   "detent": true,
+   "default": 0.0
+  },
+  "High Mid Freq": {
+   "section": "eq",
+   "param": "high_mid_freq",
+   "min": 600,
+   "max": 7000,
+   "taper": "log",
+   "default": 2500.0
+  },
+  "High Mid Q": {
+   "section": "eq",
+   "param": "high_mid_q",
+   "min": 0.5,
+   "max": 2.5,
+   "taper": "log",
+   "default": 1.0
+  },
+  "High Gain": {
+   "section": "eq",
+   "param": "high_shelf_gain",
+   "min": -15,
+   "max": 15,
+   "detent": true,
+   "default": 0.0
+  },
+  "High Freq": {
+   "section": "eq",
+   "param": "high_shelf_freq",
+   "min": 1500,
+   "max": 16000,
+   "taper": "log",
+   "default": 8000.0
+  },
+  "Threshold": {
+   "section": "comp",
+   "param": "threshold",
+   "min": 0,
+   "max": -60,
+   "default": -20.0
+  },
+  "Ratio": {
+   "section": "comp",
+   "param": "ratio",
+   "min": 1,
+   "max": 20,
+   "taper": "log",
+   "default": 4.0
+  },
+  "Attack": {
+   "section": "comp",
+   "param": "attack",
+   "min": 0.1,
+   "max": 300,
+   "taper": "log",
+   "default": 10.0
+  },
+  "Release": {
+   "section": "comp",
+   "param": "release",
+   "min": 5,
+   "max": 3000,
+   "taper": "log",
+   "default": 100.0
+  },
+  "Wet/Dry": {
+   "section": "comp",
+   "param": "mix",
+   "min": 0,
+   "max": 100,
+   "default": 100.0
+  },
+  "Drive": {
+   "section": "drive",
+   "param": "drive",
+   "min": 0,
+   "max": 36,
+   "default": 0.0
+  },
+  "Drive Character": {
+   "section": "drive",
+   "param": "tone",
+   "min": 1000,
+   "max": 20000,
+   "taper": "log",
+   "default": 20000.0
+  }
+ },
+ "buttons": {
+  "Mute": {
+   "target": "mute"
+  },
+  "Solo": {
+   "target": "solo"
+  },
+  "Phase Inv": {
+   "target": "phase"
+  },
+  "Shape": {
+   "target": "section",
+   "section": "gate"
+  },
+  "Equalizer": {
+   "target": "section",
+   "section": "eq"
+  },
+  "Compressor": {
+   "target": "section",
+   "section": "comp"
+  },
+  "Hard Gate": {
+   "target": "param_toggle",
+   "section": "gate",
+   "param": "ratio",
+   "on": 100,
+   "off": 4
+  },
+  "Filter To Compressor": {
+   "target": "param_toggle",
+   "section": "comp",
+   "param": "sc_hpf_on",
+   "on": 1,
+   "off": 0
+  },
+  "Page Up": {
+   "target": "bank",
+   "delta": -1
+  },
+  "Page Down": {
+   "target": "bank",
+   "delta": 1
+  },
+  "Low Eq Type": {
+   "target": "param_toggle",
+   "section": "eq",
+   "param": "low_bell",
+   "on": 1,
+   "off": 0
+  },
+  "High Eq Type": {
+   "target": "param_toggle",
+   "section": "eq",
+   "param": "high_bell",
+   "on": 1,
+   "off": 0
+  }
+ },
+ "track_buttons": [
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19",
+  "20"
+ ],
+ "repaint_nudge": "none",
+ "_repaint_nudge": "move | inspect | none: how the controller makes SoundCraft redraw after a change",
+ "_sections": "Each section uses the track's existing plug-in of that type. If there isn't one it is added at its preferred slot (0=A ... 4=E), or the first free slot in A-E if that's taken.",
+ "max_slots": 5,
+ "plugin_popup": {
+  "enabled": true,
+  "close_after_s": 2.0
+ },
+ "send_layer": {
+  "button": "Equalizer",
+  "knobs": [
+   [
+    "Low Gain",
+    "Low Freq"
+   ],
+   [
+    "Low Mid Gain",
+    "Low Mid Freq"
+   ],
+   [
+    "High Mid Gain",
+    "High Mid Freq"
+   ],
+   [
+    "High Gain",
+    "High Freq"
+   ]
   ],
-  "repaint_nudge": "none",
-  "_repaint_nudge": "move | inspect | none: how the controller makes SoundCraft redraw after a change",
-  "_sections": "Each section uses the track's existing plug-in of that type. If there isn't one it is added at its preferred slot (0=A ... 4=E), or the first free slot in A-E if that's taken.",
-  "max_slots": 5,
-  "plugin_popup": {
-    "enabled": true,
-    "close_after_s": 2.0
+  "_about": "Shift + the button flips the EQ section to sends (button flashes), Shift + it again goes back. Plain press keeps its normal job. Pairs are [level knob, pan knob] for sends A-D, which go to the session's busses in order.",
+  "also_flash": [
+   "Equalizer"
+  ],
+  "shift": true
+ },
+ "group_button": "Group",
+ "meters": {
+  "ccs": {
+   "input_l": 110,
+   "input_r": 111,
+   "output_l": 112,
+   "output_r": 113,
+   "gate": 114,
+   "comp": 115
   },
-  "send_layer": {
-    "button": "Equalizer",
-    "knobs": [
-      [
-        "Low Gain",
-        "Low Freq"
-      ],
-      [
-        "Low Mid Gain",
-        "Low Mid Freq"
-      ],
-      [
-        "High Mid Gain",
-        "High Mid Freq"
-      ],
-      [
-        "High Gain",
-        "High Freq"
-      ]
-    ],
-    "_about": "Shift + the button flips the EQ section to sends (button flashes), Shift + it again goes back. Plain press keeps its normal job. Pairs are [level knob, pan knob] for sends A-D, which go to the session's busses in order.",
-    "also_flash": [
-      "Equalizer"
-    ],
-    "shift": true
-  },
-  "group_button": "Group",
-  "meters": {
-    "ccs": {
-      "input_l": 110,
-      "input_r": 111,
-      "output_l": 112,
-      "output_r": 113,
-      "gate": 114,
-      "comp": 115
-    },
-    "floor_db": -60.0,
-    "top_db": 0.0,
-    "gr_full_db": 20.0,
-    "fall_per_s": 1.5,
-    "_about": "Console 1 meter LEDs. Levels between floor_db and top_db fill the meter (top = 0 dBFS, clipping). gr_full_db of gain reduction fills the gate/comp meters. fall_per_s: how fast meters drop (fraction of the meter per second).",
-    "reversed": [
-      "comp"
-    ]
-  },
-  "hardware_mode": "softube",
-  "knob_step": 2.0,
-  "fine_factor": 0.25,
-  "brightness": 6,
-  "_hardware_mode": "softube (Shift, holds, per-light brightness) or midi (the old plain-MIDI mode). knob_step: ring steps per knob click; Shift turns give fine_factor of that.",
-  "track_bright_db": null,
-  "track_dim_db": -38.0,
-  "track_fall_db_per_s": 90.0,
-  "track_flash_pwm": false,
-  "track_pwm_duty": 0.25,
-  "track_pwm_rate_hz": 160,
-  "section_lights": {
-    "gate": [
-      "Hard Gate"
-    ],
-    "eq": [
-      "Low Eq Type",
-      "High Eq Type"
-    ],
-    "comp": [
-      "Order",
-      "External Sidechain"
-    ],
-    "drive": []
-  },
-  "_default": "default = where a knob starts before its plug-in is on the track (the plug-in's own starting value, from SoundCraft's source)"
+  "floor_db": -60.0,
+  "top_db": 0.0,
+  "gr_full_db": 20.0,
+  "fall_per_s": 1.5,
+  "_about": "Console 1 meter LEDs. Levels between floor_db and top_db fill the meter (top = 0 dBFS, clipping). gr_full_db of gain reduction fills the gate/comp meters. fall_per_s: how fast meters drop (fraction of the meter per second).",
+  "reversed": [
+   "comp"
+  ]
+ },
+ "hardware_mode": "softube",
+ "knob_step": 2.0,
+ "fine_factor": 0.25,
+ "brightness": 6,
+ "_hardware_mode": "softube (Shift, holds, per-light brightness) or midi (the old plain-MIDI mode). knob_step: ring steps per knob click; Shift turns give fine_factor of that.",
+ "track_bright_db": null,
+ "track_dim_db": -38.0,
+ "track_fall_db_per_s": 90.0,
+ "track_flash_pwm": false,
+ "track_pwm_duty": 0.25,
+ "track_pwm_rate_hz": 160,
+ "section_lights": {
+  "gate": [
+   "Hard Gate"
+  ],
+  "eq": [
+   "Low Eq Type",
+   "High Eq Type"
+  ],
+  "comp": [
+   "Order",
+   "External Sidechain"
+  ],
+  "drive": []
+ },
+ "_default": "default = where a knob starts before its plug-in is on the track (the plug-in's own starting value, from SoundCraft's source)",
+ "_eq_stock_section": {
+  "plugin": "eq_7band",
+  "insert_params": {},
+  "slot": 1
+ }
 }
