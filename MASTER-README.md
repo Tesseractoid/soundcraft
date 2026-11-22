@@ -6,7 +6,7 @@ This fork (Tesseractoid/soundcraft) holds the master SoundCraft used on both Mac
 * **Automation fixes**: faders follow volume automation (also on branch `fix/mixer-automation-fader-display` for the upstream PR)
 * **Console 1 live meters**: `mix.meters`, `mix.insert_active`, polarity button
 * **`console1/`**: the Console 1 + Fader mk1 controller (Python), its maps and launchers
-* **`plugins/ak-4k-eq/`**: AK 4K EQ, the Atmos Kings black-knob console EQ plug-in (CLAP/VST3)
+* The AK 4K plug-in is kept in a separate **private** project, `Tesseractoid/ak-4k-eq`. Clone it next to this folder (GitHub Desktop puts both in Documents/GitHub) and Update SoundCraft Master builds it too.
 
 ## Branches
 
@@ -21,7 +21,7 @@ This fork (Tesseractoid/soundcraft) holds the master SoundCraft used on both Mac
 1. In GitHub Desktop, make sure the current branch is **master**.
 2. Finished working on a Mac: write a short summary, press **Commit to master**, then **Push origin**.
 3. On the other Mac: press **Fetch origin**, then **Pull origin**.
-4. Double-click **Update SoundCraft Master** in this folder. It rebuilds SoundCraft, AK 4K EQ and the controller for that Mac.
+4. Double-click **Update SoundCraft Master** in this folder. It rebuilds SoundCraft, AK 4K (if its private folder is next to this one) and the controller for that Mac.
 
 Each Mac builds its own copy (the laptop is Intel, the Mac Studio is Apple Silicon). Only the code is synced, never the built apps.
 

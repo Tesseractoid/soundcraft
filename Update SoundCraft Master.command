@@ -1,7 +1,7 @@
 #!/bin/bash
 # Double-click after pulling in GitHub Desktop. Builds everything in this repo for THIS Mac:
 #   1. SoundCraft (master: Console 1 meters + automation fixes)  -> ~/Applications/SoundCraft (Console 1).app
-#   2. AK 4K EQ plug-in (CLAP + VST3)                             -> ~/Library/Audio/Plug-Ins
+#   2. AK 4K plug-in, from the private ak-4k-eq folder next to this one -> ~/Library/Audio/Plug-Ins
 #   3. The Console 1 controller's Python packages                 -> console1/.venv
 # A full log goes to update-log.txt in this folder.
 cd "$(dirname "$0")" || exit 1
@@ -27,18 +27,19 @@ run cargo build --release -p soundcraft || fail "SoundCraft build"
 run bash console1/make_app.sh || fail "making the SoundCraft (Console 1) app"
 say "    -> ~/Applications/SoundCraft (Console 1).app"
 
-say "2/3 Building AK 4K EQ"
-# The plug-in's bundler always uses the top-most Cargo.toml it can find, which inside this repo
-# is SoundCraft's. So it's built from a copy outside the repo (kept, so rebuilds stay quick).
-EQB="$HOME/Library/Caches/ak-4k-eq-build"
-mkdir -p "$EQB"
-rsync -a --delete --exclude target --exclude build-log.txt plugins/ak-4k-eq/ "$EQB/" || fail "copying AK 4K EQ"
-( cd "$EQB" && run cargo xtask bundle ak_4k_eq --release ) || fail "AK 4K EQ build"
-mkdir -p "$HOME/Library/Audio/Plug-Ins/CLAP" "$HOME/Library/Audio/Plug-Ins/VST3"
-rm -rf "$HOME/Library/Audio/Plug-Ins/CLAP/AK 4K EQ.clap" "$HOME/Library/Audio/Plug-Ins/VST3/AK 4K EQ.vst3"
-cp -R "$EQB/target/bundled/AK 4K EQ.clap" "$HOME/Library/Audio/Plug-Ins/CLAP/" || fail "installing AK 4K EQ"
-cp -R "$EQB/target/bundled/AK 4K EQ.vst3" "$HOME/Library/Audio/Plug-Ins/VST3/" || fail "installing AK 4K EQ"
-say "    -> installed (CLAP + VST3)"
+say "2/3 AK 4K (private project)"
+# AK 4K lives in its own private GitHub project (Tesseractoid/ak-4k-eq), cloned next to this folder.
+AK="$ROOT/../ak-4k-eq"
+if [ -x "$AK/Install AK 4K.command" ] || [ -f "$AK/Cargo.toml" ]; then
+  ( cd "$AK" && run cargo xtask bundle ak_4k_eq --release ) || fail "AK 4K build"
+  mkdir -p "$HOME/Library/Audio/Plug-Ins/CLAP" "$HOME/Library/Audio/Plug-Ins/VST3"
+  rm -rf "$HOME/Library/Audio/Plug-Ins/CLAP/AK 4K EQ.clap" "$HOME/Library/Audio/Plug-Ins/VST3/AK 4K EQ.vst3"
+  cp -R "$AK/target/bundled/AK 4K EQ.clap" "$HOME/Library/Audio/Plug-Ins/CLAP/" || fail "installing AK 4K"
+  cp -R "$AK/target/bundled/AK 4K EQ.vst3" "$HOME/Library/Audio/Plug-Ins/VST3/" || fail "installing AK 4K"
+  say "    -> installed (CLAP + VST3)"
+else
+  say "    skipped: the ak-4k-eq folder isn't next to this one (clone it in GitHub Desktop)"
+fi
 
 say "3/3 Console 1 controller packages"
 # Uses Apple's own Python (the one the controller has always used); a newer Homebrew Python
@@ -50,7 +51,7 @@ console1/.venv/bin/python -c "import mido, rtmidi" 2>/dev/null \
   || run console1/.venv/bin/python -m pip install -q mido python-rtmidi || fail "installing mido / python-rtmidi"
 
 say "ALL DONE"
-osascript -e 'display notification "SoundCraft master and AK 4K EQ are up to date." with title "SoundCraft master"' >/dev/null 2>&1
+osascript -e 'display notification "SoundCraft master and AK 4K are up to date." with title "SoundCraft master"' >/dev/null 2>&1
 echo
 echo "Open 'SoundCraft (Console 1)' from your Applications folder (in your home folder),"
 echo "or double-click console1/Start Controller to start it with the Console 1."
