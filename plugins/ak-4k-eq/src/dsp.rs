@@ -8,6 +8,8 @@
 //!   * HMF bell, 600 Hz - 7 kHz,  Q 0.5 - 2.5, +/-15 dB, proportional Q
 //!   * HF  shelf (or bell), 1.5 kHz - 16 kHz, +/-15 dB
 //!   * Optional "analog" stage: op-amp style headroom and soft saturation
+//!   * E-series channel dynamics (see `Dynamics`): compressor/limiter and
+//!     expander/gate sharing one gain stage, before or after the EQ
 //!
 //! Everything runs at 2x the host sample rate so the top-end curves don't
 //! "cramp" near Nyquist and the saturation doesn't alias.
@@ -39,6 +41,21 @@ pub struct Settings {
     pub eq_in: bool,
     pub analog: bool,
     pub output_db: f32,
+
+    // dynamics
+    pub dyn_in: bool,
+    pub dyn_pre_eq: bool,
+    pub comp_ratio: f32,
+    pub comp_thresh_db: f32,
+    pub comp_release_s: f32,
+    pub comp_fast: bool,
+    pub comp_lin_rel: bool,
+    pub gate_range_db: f32,
+    pub gate_thresh_db: f32,
+    pub gate_hold_s: f32,
+    pub gate_release_s: f32,
+    pub gate_fast: bool,
+    pub gate_exp: bool,
 }
 
 impl Default for Settings {
@@ -61,6 +78,20 @@ impl Default for Settings {
             eq_in: true,
             analog: true,
             output_db: 0.0,
+
+            dyn_in: true,
+            dyn_pre_eq: false,
+            comp_ratio: 1.0,
+            comp_thresh_db: 0.0,
+            comp_release_s: 0.3,
+            comp_fast: false,
+            comp_lin_rel: false,
+            gate_range_db: 0.0,
+            gate_thresh_db: -10.0,
+            gate_hold_s: 0.0,
+            gate_release_s: 0.3,
+            gate_fast: false,
+            gate_exp: false,
         }
     }
 }
@@ -396,7 +427,206 @@ impl AnalogStage {
 }
 
 // ---------------------------------------------------------------------------
-// One audio channel
+// Dynamics (E-series channel compressor/limiter and expander/gate)
+// ---------------------------------------------------------------------------
+//
+// Modelled on SSL's published figures for the E-series channel dynamics:
+//   Compressor  ratio 1:1 (off) to infinity (limit), threshold +10 to -20 dB,
+//               "over-easy" soft knee, attack 30 ms per 20 dB of gain
+//               reduction (3 ms per 20 dB with FAST ATT), release 0.1 - 4 s,
+//               logarithmic or LIN REL (linear, threshold raised by 6 dB),
+//               RMS side-chain, automatic make-up gain from THRESH and RATIO.
+//   Gate/Exp    range 0 - 40 dB, threshold -30 to +10 dB, 20:1 gate or 2:1
+//               expander (EXP), attack 1.5 ms per 40 dB (100 us with FAST
+//               ATT), hold 0 - 4 s, release 0.1 - 4 s.
+// Both sections drive one gain stage, like the console's single VCA. Stereo
+// is linked: both channels get the same gain, from the louder side.
+//
+// Levels are in console dB (dBu). 0 dBFS is treated as +18 dBu, the same
+// alignment as the analog stage above.
+
+/// dBu = dBFS + this.
+pub const DBU_AT_0DBFS: f64 = 18.0;
+/// Ratio knob value at (and above) which the compressor becomes a limiter.
+pub const COMP_RATIO_LIMIT: f32 = 20.0;
+
+const COMP_KNEE_DB: f64 = 10.0; // "over-easy" curve
+const COMP_MAKEUP_REF_DBU: f64 = 0.0; // auto make-up is worked out at the console's working level
+const COMP_MAKEUP_AMOUNT: f64 = 0.5;
+const RMS_TIME_S: f64 = 0.005;
+const GATE_PEAK_DECAY_S: f64 = 0.01;
+const GATE_HYSTERESIS_DB: f64 = 2.0;
+const GATE_RATIO: f64 = 20.0;
+const EXP_RATIO: f64 = 2.0;
+const MAX_BLOCK: usize = 64;
+
+impl Settings {
+    pub fn comp_active(&self) -> bool {
+        self.dyn_in && self.comp_ratio > 1.01
+    }
+    pub fn gate_active(&self) -> bool {
+        self.dyn_in && self.gate_range_db > 0.1
+    }
+}
+
+/// Compressor curve: gain change in dB (zero or negative) for a level in dBu.
+pub fn comp_curve_db(level_dbu: f64, thresh_dbu: f64, ratio: f32) -> f64 {
+    let slope = if ratio >= COMP_RATIO_LIMIT { 1.0 } else { 1.0 - 1.0 / ratio.max(1.0) as f64 };
+    let over = level_dbu - thresh_dbu;
+    let half = COMP_KNEE_DB / 2.0;
+    if over <= -half {
+        0.0
+    } else if over >= half {
+        -slope * over
+    } else {
+        -slope * (over + half).powi(2) / (2.0 * COMP_KNEE_DB)
+    }
+}
+
+/// Effective compressor threshold (LIN REL raises it by 6 dB, as on the console).
+fn comp_thresh(s: &Settings) -> f64 {
+    s.comp_thresh_db as f64 + if s.comp_lin_rel { 6.0 } else { 0.0 }
+}
+
+/// Automatic make-up gain in dB for the current THRESH and RATIO.
+pub fn comp_makeup_db(s: &Settings) -> f64 {
+    -comp_curve_db(COMP_MAKEUP_REF_DBU, comp_thresh(s), s.comp_ratio) * COMP_MAKEUP_AMOUNT
+}
+
+pub struct Dynamics {
+    fs: f64,
+    rms_coef: f64,
+    peak_decay: f64,
+    ms: Vec<f64>,     // per-channel mean square (compressor side-chain)
+    comp_gr: f64,     // current compressor gain change, dB (<= 0)
+    gate_env: f64,    // peak envelope (gate side-chain), linear
+    gate_open: bool,
+    gate_gain: f64,   // current gate gain change, dB (<= 0)
+    hold_left: u64,
+    meter_comp: f32,
+    meter_gate: f32,
+}
+
+impl Dynamics {
+    pub fn new(fs: f64, channels: usize) -> Self {
+        Self {
+            fs,
+            rms_coef: 1.0 - (-1.0 / (RMS_TIME_S * fs)).exp(),
+            peak_decay: (-1.0 / (GATE_PEAK_DECAY_S * fs)).exp(),
+            ms: vec![0.0; channels.max(1)],
+            comp_gr: 0.0,
+            gate_env: 0.0,
+            gate_open: false,
+            gate_gain: 0.0,
+            hold_left: 0,
+            meter_comp: 0.0,
+            meter_gate: 0.0,
+        }
+    }
+
+    pub fn reset(&mut self) {
+        let (fs, ch) = (self.fs, self.ms.len());
+        *self = Self::new(fs, ch);
+    }
+
+    /// One side-chain step. `levels` iterates the channels' samples at this
+    /// instant; returns the linear gain to apply to every channel.
+    #[inline]
+    fn step(&mut self, s: &Settings, frame: impl Iterator<Item = f64>) -> f64 {
+        let fs = self.fs;
+        let mut peak = 0.0f64;
+        let mut ms_max = 0.0f64;
+        for (ms, x) in self.ms.iter_mut().zip(frame) {
+            *ms += self.rms_coef * (x * x - *ms);
+            ms_max = ms_max.max(*ms);
+            peak = peak.max(x.abs());
+        }
+        let mut total_db = 0.0;
+
+        // compressor / limiter
+        if s.comp_active() {
+            let level = 10.0 * ms_max.max(1e-20).log10() + DBU_AT_0DBFS;
+            let target = comp_curve_db(level, comp_thresh(s), s.comp_ratio);
+            if target < self.comp_gr {
+                // attack: rate-limited, so it is "program dependent" -
+                // small amounts of reduction arrive quickly, big ones take longer
+                let per_20db = if s.comp_fast { 0.003 } else { 0.030 };
+                let rate = 20.0 / (per_20db * fs);
+                self.comp_gr -= (self.comp_gr - target).min(rate);
+            } else {
+                let rel = (s.comp_release_s as f64).max(0.01);
+                if s.comp_lin_rel {
+                    // linear: constant dB per second
+                    let rate = 10.0 / (rel * fs);
+                    self.comp_gr += (target - self.comp_gr).min(rate);
+                } else {
+                    // logarithmic: exponential return, time constant = RELEASE
+                    self.comp_gr += (target - self.comp_gr) * (1.0 - (-1.0 / (rel * fs)).exp());
+                }
+            }
+            total_db += self.comp_gr + comp_makeup_db(s);
+        } else {
+            self.comp_gr = 0.0;
+        }
+
+        // expander / gate
+        if s.gate_active() {
+            self.gate_env = peak.max(self.gate_env * self.peak_decay);
+            let level = 20.0 * self.gate_env.max(1e-10).log10() + DBU_AT_0DBFS;
+            let thr = s.gate_thresh_db as f64;
+            let range = s.gate_range_db as f64;
+            let above = if self.gate_open { level > thr - GATE_HYSTERESIS_DB } else { level > thr };
+            self.gate_open = above;
+            let target = if above {
+                self.hold_left = (s.gate_hold_s as f64 * fs) as u64;
+                0.0
+            } else if self.hold_left > 0 {
+                self.hold_left -= 1;
+                self.gate_gain.max(0.0)
+            } else {
+                let ratio = if s.gate_exp { EXP_RATIO } else { GATE_RATIO };
+                ((level - thr) * (ratio - 1.0)).max(-range).min(0.0)
+            };
+            if target > self.gate_gain {
+                let per_40db = if s.gate_fast { 0.0001 } else { 0.0015 };
+                self.gate_gain += (target - self.gate_gain).min(40.0 / (per_40db * fs));
+            } else {
+                let rel = (s.gate_release_s as f64).max(0.01);
+                self.gate_gain -= (self.gate_gain - target).min(40.0 / (rel * fs));
+            }
+            total_db += self.gate_gain;
+        } else {
+            self.gate_gain = 0.0;
+            self.gate_open = false;
+            self.hold_left = 0;
+        }
+
+        self.meter_comp = self.meter_comp.max((-self.comp_gr) as f32);
+        self.meter_gate = self.meter_gate.max((-self.gate_gain) as f32);
+        10f64.powf(total_db / 20.0)
+    }
+
+    /// Run the side-chain over `chans[..][start..end]` and apply the gain in place.
+    fn process(&mut self, s: &Settings, chans: &mut [&mut [f32]], start: usize, end: usize) {
+        for i in start..end {
+            let g = self.step(s, chans.iter().map(|c| c[i] as f64));
+            for c in chans.iter_mut() {
+                c[i] = (c[i] as f64 * g) as f32;
+            }
+        }
+    }
+
+    /// Peak compressor and gate gain reduction (dB, positive) since the last call.
+    pub fn take_meters(&mut self) -> (f32, f32) {
+        let m = (self.meter_comp, self.meter_gate);
+        self.meter_comp = 0.0;
+        self.meter_gate = 0.0;
+        m
+    }
+}
+
+// ---------------------------------------------------------------------------
+// One audio channel (EQ path)
 // ---------------------------------------------------------------------------
 
 #[derive(Clone)]
@@ -426,28 +656,31 @@ impl Default for Channel {
     }
 }
 
-/// The whole processor (any number of channels).
+/// The whole channel strip (any number of channels).
 pub struct Processor {
     fs_os: f64,
     h: [f64; FIR_TAPS],
     channels: Vec<Channel>,
     design: Design,
-    analog: bool,
+    settings: Settings,
     out_gain: f64,
     dc_r: f64,
+    dynamics: Dynamics,
 }
 
 impl Processor {
     pub fn new(sample_rate: f32, num_channels: usize) -> Self {
         let fs_os = sample_rate as f64 * 2.0;
+        let settings = Settings::default();
         Self {
             fs_os,
             h: design_halfband(),
             channels: vec![Channel::new(); num_channels],
-            design: Design::new(&Settings::default(), fs_os),
-            analog: true,
+            design: Design::new(&settings, fs_os),
+            settings,
             out_gain: 1.0,
             dc_r: 1.0 - 2.0 * PI * 5.0 / fs_os,
+            dynamics: Dynamics::new(sample_rate as f64, num_channels),
         }
     }
 
@@ -455,21 +688,56 @@ impl Processor {
         for c in self.channels.iter_mut() {
             *c = Channel::new();
         }
+        self.dynamics.reset();
     }
 
     pub fn set(&mut self, s: &Settings) {
         self.design = Design::new(s, self.fs_os);
-        self.analog = s.analog;
+        self.settings = *s;
         self.out_gain = 10f64.powf(s.output_db as f64 / 20.0);
     }
 
-    /// Process one block of one channel in place.
-    pub fn process(&mut self, ch: usize, samples: &mut [f32]) {
+    /// Process one block of all channels in place (one slice per channel).
+    pub fn process_block(&mut self, chans: &mut [&mut [f32]]) {
+        let n = chans.iter().map(|c| c.len()).min().unwrap_or(0);
+        let mut start = 0;
+        while start < n {
+            let end = (start + MAX_BLOCK).min(n);
+            let s = self.settings;
+            let dynamics = s.comp_active() || s.gate_active();
+            if dynamics && s.dyn_pre_eq {
+                self.dynamics.process(&s, chans, start, end);
+            }
+            for (ch, buf) in chans.iter_mut().enumerate().take(self.channels.len()) {
+                self.eq(ch, &mut buf[start..end]);
+            }
+            if dynamics && !s.dyn_pre_eq {
+                self.dynamics.process(&s, chans, start, end);
+            }
+            if !dynamics {
+                // keep the side-chain quiet so it doesn't jump when switched back in
+                self.dynamics.reset();
+            }
+            for buf in chans.iter_mut() {
+                for x in buf[start..end].iter_mut() {
+                    *x = (*x as f64 * self.out_gain) as f32;
+                }
+            }
+            start = end;
+        }
+    }
+
+    /// Gain-reduction meters (compressor, gate) in dB since the last call.
+    pub fn take_meters(&mut self) -> (f32, f32) {
+        self.dynamics.take_meters()
+    }
+
+    /// The oversampled EQ path for one channel (filters, bands, analog stage).
+    fn eq(&mut self, ch: usize, samples: &mut [f32]) {
         let h = &self.h;
         let d = &self.design;
-        let analog = self.analog;
+        let analog = self.settings.analog;
         let dc_r = self.dc_r;
-        let g = self.out_gain;
         let c = &mut self.channels[ch];
         for x in samples.iter_mut() {
             let input = *x as f64;
@@ -491,7 +759,7 @@ impl Processor {
                     out = dn;
                 }
             }
-            *x = (out * g) as f32;
+            *x = out as f32;
         }
     }
 }
@@ -502,6 +770,28 @@ mod tests {
 
     fn s() -> Settings {
         Settings::default()
+    }
+
+    fn sine(n: usize, f: f32, amp: f32) -> Vec<f32> {
+        (0..n).map(|i| (2.0 * PI as f32 * f * i as f32 / 48_000.0).sin() * amp).collect()
+    }
+
+    fn run(st: &Settings, buf: &mut [f32]) {
+        let mut p = Processor::new(48_000.0, 1);
+        p.set(st);
+        for chunk in buf.chunks_mut(32) {
+            p.process_block(&mut [chunk]);
+        }
+    }
+
+    fn rms_dbu(x: &[f32]) -> f64 {
+        let ms: f64 = x.iter().map(|v| (*v as f64).powi(2)).sum::<f64>() / x.len() as f64;
+        10.0 * ms.log10() + DBU_AT_0DBFS
+    }
+
+    /// Sine amplitude (linear) for a given RMS level in dBu.
+    fn amp_for_dbu(dbu: f64) -> f32 {
+        (10f64.powf((dbu - DBU_AT_0DBFS) / 20.0) * 2f64.sqrt()) as f32
     }
 
     #[test]
@@ -579,12 +869,10 @@ mod tests {
     fn processor_is_transparent_when_flat_and_quiet() {
         let mut st = s();
         st.analog = false;
-        let mut p = Processor::new(48_000.0, 1);
-        p.set(&st);
         let n = 4800;
-        let mut buf: Vec<f32> = (0..n).map(|i| (2.0 * PI as f32 * 1000.0 * i as f32 / 48_000.0).sin() * 0.25).collect();
+        let mut buf = sine(n, 1000.0, 0.25);
         let orig = buf.clone();
-        p.process(0, &mut buf);
+        run(&st, &mut buf);
         let lat = LATENCY_SAMPLES as usize;
         let mut err = 0.0f32;
         for i in 1000..n {
@@ -597,16 +885,204 @@ mod tests {
     fn analog_stage_is_clean_at_normal_level() {
         // -18 dBFS sine: harmonic distortion should be tiny
         let st = s();
-        let mut p = Processor::new(48_000.0, 1);
-        p.set(&st);
-        let n = 48_000;
-        let amp = 0.125f32;
-        let mut buf: Vec<f32> = (0..n).map(|i| (2.0 * PI as f32 * 1000.0 * i as f32 / 48_000.0).sin() * amp).collect();
-        p.process(0, &mut buf);
+        let mut buf = sine(48_000, 1000.0, 0.125);
+        run(&st, &mut buf);
         let h2 = goertzel(&buf[24_000..], 2000.0, 48_000.0);
         let h1 = goertzel(&buf[24_000..], 1000.0, 48_000.0);
         let thd_db = 20.0 * (h2 / h1).log10();
         assert!(thd_db < -55.0, "2nd harmonic at {thd_db} dB");
+    }
+
+    // ---- dynamics ----
+
+    fn dyn_settings() -> Settings {
+        let mut st = s();
+        st.analog = false;
+        st
+    }
+
+    #[test]
+    fn comp_curve_is_soft_then_ratio() {
+        // well below threshold: nothing; well above: exactly the ratio
+        assert_eq!(comp_curve_db(-20.0, 0.0, 4.0), 0.0);
+        assert!((comp_curve_db(20.0, 0.0, 4.0) + 15.0).abs() < 1e-9);
+        // at threshold the over-easy knee is already acting a little
+        let at = comp_curve_db(0.0, 0.0, 4.0);
+        assert!(at < -0.5 && at > -2.5, "{at}");
+        // limit: everything above threshold comes back to it
+        assert!((comp_curve_db(20.0, 0.0, COMP_RATIO_LIMIT) + 20.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn compressor_steady_state_matches_ratio_and_makeup() {
+        let mut st = dyn_settings();
+        st.comp_ratio = 4.0;
+        st.comp_thresh_db = -10.0;
+        let in_dbu = 10.0;
+        let mut buf = sine(48_000, 1000.0, amp_for_dbu(in_dbu));
+        run(&st, &mut buf);
+        let out = rms_dbu(&buf[24_000..]);
+        // 20 dB over threshold at 4:1 -> 15 dB of reduction, plus automatic make-up
+        let expect = in_dbu - 15.0 + comp_makeup_db(&st);
+        assert!((out - expect).abs() < 0.6, "out {out:.2} dBu, expected {expect:.2}");
+    }
+
+    #[test]
+    fn compressor_does_nothing_at_1_to_1() {
+        let mut st = dyn_settings();
+        st.comp_thresh_db = -20.0; // ratio left at 1:1
+        let mut buf = sine(24_000, 1000.0, amp_for_dbu(10.0));
+        run(&st, &mut buf);
+        assert!((rms_dbu(&buf[12_000..]) - 10.0).abs() < 0.05);
+    }
+
+    #[test]
+    fn fast_attack_is_about_ten_times_quicker() {
+        // time for the gain reduction to reach 10 dB on a sudden loud signal
+        let time_to = |fast: bool| {
+            let mut st = dyn_settings();
+            st.comp_ratio = COMP_RATIO_LIMIT;
+            st.comp_thresh_db = -20.0;
+            st.comp_fast = fast;
+            let mut d = Dynamics::new(48_000.0, 1);
+            let x = amp_for_dbu(10.0) as f64 / 2f64.sqrt(); // DC at the same RMS
+            for i in 0..48_000 {
+                d.step(&st, std::iter::once(x));
+                if -d.comp_gr >= 10.0 {
+                    return i as f64 / 48.0; // ms
+                }
+            }
+            panic!("never reached 10 dB");
+        };
+        let (slow, fast) = (time_to(false), time_to(true));
+        assert!(slow > 12.0 && slow < 25.0, "normal attack {slow:.1} ms");
+        assert!(fast < 3.0, "fast attack {fast:.1} ms");
+    }
+
+    #[test]
+    fn release_follows_the_knob() {
+        let recover = |rel: f32| {
+            let mut st = dyn_settings();
+            st.comp_ratio = COMP_RATIO_LIMIT;
+            st.comp_thresh_db = -20.0;
+            st.comp_release_s = rel;
+            let mut d = Dynamics::new(48_000.0, 1);
+            let loud = amp_for_dbu(10.0) as f64 / 2f64.sqrt();
+            for _ in 0..24_000 {
+                d.step(&st, std::iter::once(loud));
+            }
+            let mut n = 0;
+            while -d.comp_gr > 3.0 {
+                d.step(&st, std::iter::once(0.0));
+                n += 1;
+            }
+            n as f64 / 48_000.0
+        };
+        let (short, long) = (recover(0.1), recover(1.0));
+        assert!(long > short * 6.0, "0.1 s -> {short:.3}, 1 s -> {long:.3}");
+    }
+
+    #[test]
+    fn gate_closes_by_the_range_below_threshold() {
+        let mut st = dyn_settings();
+        st.gate_range_db = 40.0;
+        st.gate_thresh_db = -10.0;
+        let mut quiet = sine(48_000, 1000.0, amp_for_dbu(-30.0));
+        run(&st, &mut quiet);
+        let att = -30.0 - rms_dbu(&quiet[24_000..]);
+        assert!((att - 40.0).abs() < 1.0, "quiet signal attenuated by {att:.1} dB");
+
+        let mut loud = sine(48_000, 1000.0, amp_for_dbu(0.0));
+        run(&st, &mut loud);
+        assert!(rms_dbu(&loud[24_000..]).abs() < 0.1, "loud signal should pass");
+    }
+
+    #[test]
+    fn expander_is_2_to_1() {
+        let mut st = dyn_settings();
+        st.gate_range_db = 40.0;
+        st.gate_thresh_db = -10.0;
+        st.gate_exp = true;
+        let mut buf = sine(48_000, 1000.0, amp_for_dbu(-20.0));
+        run(&st, &mut buf);
+        // the side-chain reads peaks (3 dB above RMS), so this sine sits ~7 dB under
+        let att = -20.0 - rms_dbu(&buf[24_000..]);
+        assert!(att > 5.0 && att < 9.0, "expanded by {att:.1} dB");
+    }
+
+    #[test]
+    fn gate_holds_before_releasing() {
+        let mut st = dyn_settings();
+        st.gate_range_db = 40.0;
+        st.gate_thresh_db = -10.0;
+        st.gate_hold_s = 0.2;
+        st.gate_release_s = 0.1;
+        let mut d = Dynamics::new(48_000.0, 1);
+        let loud = amp_for_dbu(0.0) as f64;
+        for _ in 0..4_800 {
+            d.step(&st, std::iter::once(loud));
+        }
+        // 150 ms of silence: still inside the hold, so still open
+        for _ in 0..7_200 {
+            d.step(&st, std::iter::once(0.0));
+        }
+        assert!(d.gate_gain > -1.0, "closed during hold: {}", d.gate_gain);
+        // another 300 ms: hold over and released
+        for _ in 0..14_400 {
+            d.step(&st, std::iter::once(0.0));
+        }
+        assert!(d.gate_gain < -39.0, "didn't close: {}", d.gate_gain);
+    }
+
+    #[test]
+    fn stereo_is_linked() {
+        let mut st = dyn_settings();
+        st.comp_ratio = COMP_RATIO_LIMIT;
+        st.comp_thresh_db = -20.0;
+        let mut p = Processor::new(48_000.0, 2);
+        p.set(&st);
+        let mut l = sine(48_000, 1000.0, amp_for_dbu(10.0));
+        let mut r = sine(48_000, 1000.0, amp_for_dbu(-30.0)); // below threshold on its own
+        for (a, b) in l.chunks_mut(32).zip(r.chunks_mut(32)) {
+            p.process_block(&mut [a, b]);
+        }
+        let dl = 10.0 - rms_dbu(&l[24_000..]);
+        let dr = -30.0 - rms_dbu(&r[24_000..]);
+        assert!((dl - dr).abs() < 0.1, "left reduced {dl:.2}, right {dr:.2}");
+        assert!(dr > 5.0);
+    }
+
+    #[test]
+    fn dynamics_can_go_before_the_eq() {
+        // a big LF boost after the compressor isn't compressed; before it, it is
+        let level = |pre: bool| {
+            let mut st = dyn_settings();
+            st.comp_ratio = 4.0;
+            st.comp_thresh_db = 0.0;
+            st.lf_gain_db = 12.0;
+            st.lf_hz = 200.0;
+            st.dyn_pre_eq = pre;
+            let mut buf = sine(48_000, 60.0, amp_for_dbu(-6.0));
+            run(&st, &mut buf);
+            rms_dbu(&buf[24_000..])
+        };
+        assert!(level(true) > level(false) + 3.0, "pre {:.1} post {:.1}", level(true), level(false));
+    }
+
+    #[test]
+    fn meters_report_reduction() {
+        let mut st = dyn_settings();
+        st.comp_ratio = COMP_RATIO_LIMIT;
+        st.comp_thresh_db = -10.0;
+        let mut p = Processor::new(48_000.0, 1);
+        p.set(&st);
+        let mut buf = sine(24_000, 1000.0, amp_for_dbu(10.0));
+        for c in buf.chunks_mut(32) {
+            p.process_block(&mut [c]);
+        }
+        let (comp, gate) = p.take_meters();
+        assert!(comp > 15.0, "comp meter {comp}");
+        assert_eq!(gate, 0.0);
     }
 
     pub fn goertzel(x: &[f32], f: f64, fs: f64) -> f64 {
