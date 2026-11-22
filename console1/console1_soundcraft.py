@@ -919,8 +919,29 @@ class Controller:
         log(f"Status window: http://127.0.0.1:{port}")
 
     # --- run ---
+    def start_watchdog(self, stall_s=20):
+        """If the controller stops moving (stuck waiting on SoundCraft or the hardware), write
+        what every part of it is doing into controller.log, so the cause can be found."""
+        import faulthandler
+
+        def watch():
+            dumped = False
+            while not self.quitting:
+                time.sleep(2)
+                stuck = time.time() - self.heartbeat
+                if stuck > stall_s and not dumped:
+                    log(f"WATCHDOG: no progress for {stuck:.0f}s - what each part is doing:")
+                    with open(HERE / "controller.log", "a") as f:
+                        faulthandler.dump_traceback(file=f, all_threads=True)
+                    dumped = True
+                elif stuck < stall_s:
+                    dumped = False
+        threading.Thread(target=watch, daemon=True).start()
+
     def run(self):
         self.quitting = False
+        self.heartbeat = time.time()
+        self.start_watchdog()
         self.serve_gui()
         self.sc.connect()
         self.poll(); self.feedback(force=True)
@@ -959,6 +980,7 @@ class Controller:
         last_poll, last_name = 0, None
         try:
             while not self.quitting:
+                self.heartbeat = time.time()
                 self.flush()
                 if self.popup and time.time() - self.popup[3] > LAYOUT.get("plugin_popup", {}).get("close_after_s", 2.0):
                     self.hide_plugin()
