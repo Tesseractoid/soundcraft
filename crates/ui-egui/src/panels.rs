@@ -111,10 +111,28 @@ fn plugin_editors(app: &mut SoundApp) {
         }
         false
     });
+    let mut status = None;
     for &(t, s) in &want {
-        if !opened.contains(&(t, s)) && p.has_editor(t, s) && !p.editor_open(t, s) && p.open_editor(t, s).is_ok() {
-            opened.push((t, s));
+        if opened.contains(&(t, s)) || p.editor_open(t, s) {
+            continue;
+        }
+        if !p.has_editor(t, s) {
+            log::info!("plugin_editors: track {} slot {s} has no editor yet", t.0);
+            continue;
+        }
+        match p.open_editor(t, s) {
+            Ok(()) => {
+                log::info!("plugin_editors: opened track {} slot {s}", t.0);
+                opened.push((t, s));
+            }
+            Err(e) => {
+                log::warn!("plugin_editors: track {} slot {s}: {e}", t.0);
+                status = Some(format!("Plugin editor: {e}"));
+            }
         }
     }
     app.ui.plugin_editors_opened = opened;
+    if let Some(s) = status {
+        app.ui.status = s;
+    }
 }

@@ -855,7 +855,9 @@ pub fn run_ui_command(app: &mut SoundApp, id: &str, p: &Value) -> Option<Result<
                         }
                         let closed_preferences = app.ui.show_preferences && !ns.show_preferences;
                         crate::docking::cancel_replaced_state(app, &ns);
+                        let editors_opened = std::mem::take(&mut app.ui.plugin_editors_opened);
                         app.ui = ns;
+                        app.ui.plugin_editors_opened = editors_opened;
                         app.ui.undo_levels = app.ui.undo_levels.clamp(1, 64);
                         app.engine.set_history_limit(app.ui.undo_levels);
                         if closed_preferences {

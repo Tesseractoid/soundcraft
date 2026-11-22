@@ -235,7 +235,9 @@ class Controller:
         want = [tid, slot]
         opened = want not in wins
         wins = [w for w in wins if w != want] + [want]       # last in the list = in front
-        self.sc.call("ui.set", {key: wins})
+        r = self.sc.call("ui.set", {key: wins})
+        if key == "plugin_editors":
+            log(f"Plug-in panel: asked SoundCraft to open track {tid} slot {chr(65 + slot)} ({'ok' if r is not None else self.sc.last_error})")
         self.popup = [tid, slot, opened, now, key]
 
     def hide_plugin(self):
