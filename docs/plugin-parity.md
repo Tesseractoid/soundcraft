@@ -44,7 +44,7 @@ User report #152: a saved instrument level does not reach the bounce.
 | Notes / MIDI to instruments | ✅ | ✅ | But no live MIDI input (G-02) |
 | State saved in sessions, presets | ✅ | ✅ | |
 | Create/destroy off the audio thread | ✅ | ✅ | |
-| Editors: CLAP | — | 🟡 floating windows; embedded editors on Windows and Linux/X11 (verified with Graillon and Surge XT Effects) | Embedded on macOS missing (#485) |
+| Editors: CLAP | — | 🟡 floating windows; embedded editors on Windows, Linux/X11 (verified with Graillon and Surge XT Effects) and macOS (verified with an nih-plug egui plugin) | |
 | Editors: VST3 | — | ✅ macOS (verified with a commercial pitch editor), Windows (verified with a free JUCE compressor) and Linux/X11 through XWayland on Wayland (verified with Graillon and Surge XT Effects) | |
 | Editors: AU | — | ❌ | Cocoa view hosting missing |
 | Multiple editor pages | ✅ | 🟡 | #6 |

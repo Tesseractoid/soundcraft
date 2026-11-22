@@ -136,7 +136,7 @@ impl GuiLink {
             if hostwin::SUPPORTED && unsafe { supported(g.plugin, api.as_ptr(), false) } {
                 return self.open_embedded(&mut g, vt, api, title);
             }
-            return Err("this plugin offers only an embedded editor, which SoundCraft hosts on Windows and X11 (Linux, BSDs) only".into());
+            return Err("this plugin offers only an embedded editor, which SoundCraft does not host on this platform".into());
         }
         self.host.gui_closed.store(false, Ordering::Relaxed);
         self.host.gui_destroyed.store(false, Ordering::Relaxed);

@@ -126,8 +126,15 @@ mod hostwin;
 #[path = "ffi/hostwin/x11.rs"]
 mod hostwin;
 
+/// The macOS host window for embedded editors: an `NSWindow` whose content view the plugin's
+/// GUI attaches to (the same window the VST3 host uses). Closing it hides it; the editor link
+/// notices in `idle`, destroys the plugin's GUI, then the window.
+#[cfg(target_os = "macos")]
+#[path = "ffi/hostwin/macos.rs"]
+mod hostwin;
+
 /// Other platforms: embedded editors are not hosted (floating ones still are).
-#[cfg(not(any(windows, all(unix, not(target_os = "macos")))))]
+#[cfg(not(any(windows, unix)))]
 #[path = "ffi/hostwin/other.rs"]
 mod hostwin;
 
