@@ -1,0 +1,460 @@
+{
+  "1B": {
+    "label": "Input Gain",
+    "values_seen": [
+      127
+    ]
+  },
+  "1D": {
+    "label": "Low Cut",
+    "values_seen": [
+      127
+    ]
+  },
+  "1C": {
+    "label": "High Cut",
+    "values_seen": [
+      127
+    ]
+  },
+  "26": {
+    "label": "Punch",
+    "values_seen": [
+      127
+    ]
+  },
+  "25": {
+    "label": "Sustain",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "24": {
+    "label": "Gate Release",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "22": {
+    "label": "Gate",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "2A": {
+    "label": "Low Gain",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "29": {
+    "label": "Low Freq",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "2D": {
+    "label": "Low Mid Gain",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "2B": {
+    "label": "Low Mid Freq",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "2C": {
+    "label": "Low Mid Q",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "30": {
+    "label": "High Mid Gain",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "2E": {
+    "label": "High Mid Freq",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "2F": {
+    "label": "High Mid Q",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "33": {
+    "label": "High Gain",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "32": {
+    "label": "High Freq",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "36": {
+    "label": "Wet/Dry",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "35": {
+    "label": "Ratio",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "39": {
+    "label": "Threshold",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "38": {
+    "label": "Release",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "37": {
+    "label": "Attack",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "3C": {
+    "label": "Drive",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "3D": {
+    "label": "Drive Character",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "3E": {
+    "label": "Pan",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "41": {
+    "label": "Volume",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "02": {
+    "label": "Shift",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "20": {
+    "label": "Preset",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "1F": {
+    "label": "Phase Inv",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "1E": {
+    "label": "Filters To Compressor",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "00": {
+    "label": "Display On",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "01": {
+    "label": "Display Mode",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "21": {
+    "label": "Shape",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "23": {
+    "label": "Hard Gate",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "27": {
+    "label": "Equalizer",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "28": {
+    "label": "Low Eq Type",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "31": {
+    "label": "High Eq Type",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "34": {
+    "label": "Compressor",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "3F": {
+    "label": "Solo",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "40": {
+    "label": "Mute",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "03": {
+    "label": "Page Down",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "04": {
+    "label": "Page Up",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "05": {
+    "label": "1",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "06": {
+    "label": "2",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "07": {
+    "label": "3",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "08": {
+    "label": "4",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "09": {
+    "label": "5",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "0A": {
+    "label": "6",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "0B": {
+    "label": "7",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "0C": {
+    "label": "8",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "0D": {
+    "label": "9",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "0E": {
+    "label": "10",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "0F": {
+    "label": "11",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "10": {
+    "label": "12",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "11": {
+    "label": "13",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "12": {
+    "label": "14",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "13": {
+    "label": "15",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "14": {
+    "label": "16",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "15": {
+    "label": "17",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "16": {
+    "label": "18",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "17": {
+    "label": "19",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "18": {
+    "label": "20",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "19": {
+    "label": "Group",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "1A": {
+    "label": "Copy",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "3A": {
+    "label": "Order",
+    "values_seen": [
+      0,
+      127
+    ]
+  },
+  "3B": {
+    "label": "External Sidechain",
+    "values_seen": [
+      0,
+      127
+    ]
+  }
+}

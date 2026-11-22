@@ -1,0 +1,138 @@
+{
+  "_about": "Console 1 mk1 light block in Softube mode (cmd 0x01, 97 data bytes: [0]=counter, [1..96]=values). Confirmed with Softube's own frames + camera, 2026-11-18. Values 0-127; buttons: 0 off, 63 dim, 127 bright; rings: 0-127 dot position; 3-state indicators: 0/63/127 pick the LED.",
+  "counter": 0,
+  "brightness_global": 96,
+  "keep": {
+    "95": 32
+  },
+  "tracks": {
+    "1": 6,
+    "2": 7,
+    "3": 8,
+    "4": 9,
+    "5": 10,
+    "6": 11,
+    "7": 12,
+    "8": 13,
+    "9": 14,
+    "10": 15,
+    "11": 16,
+    "12": 17,
+    "13": 18,
+    "14": 19,
+    "15": 20,
+    "16": 21,
+    "17": 22,
+    "18": 23,
+    "19": 24,
+    "20": 25
+  },
+  "buttons": {
+    "Group": 26,
+    "Copy": 27,
+    "Filters To Compressor": 31,
+    "Phase Inv": 32,
+    "Shape": 34,
+    "Equalizer": 40,
+    "Compressor": 53,
+    "Solo": 64,
+    "Mute": 65,
+    "Display Mode": 2,
+    "Preset": 33,
+    "Hard Gate": 36,
+    "Display On": 1,
+    "Page Down": 4,
+    "Page Up": 5
+  },
+  "three_state": {
+    "Low Eq Type": 41,
+    "High Eq Type": 50,
+    "Order": 59,
+    "External Sidechain": 60
+  },
+  "rings": {
+    "Input Gain": 28,
+    "High Cut": 29,
+    "Low Cut": 30,
+    "Gate": 35,
+    "Gate Release": 37,
+    "Sustain": 38,
+    "Punch": 39,
+    "Low Freq": 42,
+    "Low Gain": 43,
+    "Low Mid Freq": 44,
+    "Low Mid Q": 45,
+    "Low Mid Gain": 46,
+    "High Mid Freq": 47,
+    "High Mid Q": 48,
+    "High Mid Gain": 49,
+    "High Freq": 51,
+    "High Gain": 52,
+    "Ratio": 54,
+    "Wet/Dry": 55,
+    "Attack": 56,
+    "Release": 57,
+    "Threshold": 58,
+    "Drive": 61,
+    "Drive Character": 62,
+    "Pan": 63,
+    "Volume": 66
+  },
+  "meters": {
+    "input_l": 67,
+    "input_r": 68,
+    "output_l": 69,
+    "output_r": 70,
+    "comp_gr": 72,
+    "gate_gr": 71
+  },
+  "ring_enable_bitfields": [
+    76,
+    77,
+    78,
+    79,
+    80,
+    81,
+    82
+  ],
+  "ring_centre_bitfields": [
+    89,
+    90,
+    91,
+    92
+  ],
+  "unconfirmed": {},
+  "layers": {
+    "_about": "A button lights only if its level is set AND its switch in the layer positions is set. Track buttons and the Display/Page buttons use layer positions 73-75 and 84-87 (packed, one switch per button); rings, Preset and Hard Gate use the enable positions 76-82. Simplest safe default: set all layer/enable positions to 127 and drive brightness with the level positions.",
+    "track_layers": [
+      73,
+      74,
+      75,
+      84,
+      85,
+      86,
+      87
+    ],
+    "enables": [
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82
+    ]
+  },
+  "meter_switches": {
+    "_about": "Position 83: bit 6 = Shape (gate) meter on, bit 5 = Compressor meter on. Confirmed on hardware 2026-11-18.",
+    "position": 83,
+    "gate": 64,
+    "comp": 32
+  },
+  "enable_switches": {
+    "_about": "Positions 76-82 switch individual lights fully off. Light position P (22..70) -> position 76 + (P-22)//7, bit 6 - (P-22)%7. Confirmed on hardware 2026-11-18."
+  },
+  "track_bright": {
+    "_about": "Track buttons: level >0 = dim; bright switch in 84 bit1 (t1), 84 bit0 (t2), 85 bits 6..0 (t3-9), 86 bits 6..0 (t10-16), 87 bits 6..3 (t17-20). Level values in between show no difference."
+  }
+}

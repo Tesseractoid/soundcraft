@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Console 1 Controller</title>
+<style>
+  :root {
+    --bg: #121315; --text: #e8e6e1; --dim: #8a8d91; --edge: #2a2d31;
+    --frame: #6b6c6e; --face: #1a1b1d; --line: #cfcac0; --amber: #f2a33a; --ok: #59c27a; --bad: #e0574f; --send: #5fb3e8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 13px/1.35 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; }
+  header { display: flex; align-items: center; gap: 14px; padding: 10px 18px; border-bottom: 1px solid var(--edge); flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  .badge { font-size: 11px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--edge); color: var(--dim); }
+  .badge.on { color: #1b1305; background: var(--amber); border-color: var(--amber); }
+  .badge.warn { color: var(--amber); border-color: var(--amber); }
+  .badge.layer { color: #08202e; background: var(--send); border-color: var(--send); animation: blink .8s steps(1) infinite; }
+  .badge.group { color: #1b1305; background: #c9a6ff; border-color: #c9a6ff; }
+  @keyframes blink { 50% { opacity: .35; } }
+  .status { display: flex; gap: 14px; margin-left: auto; color: var(--dim); font-size: 12px; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--bad); }
+  .dot.ok { background: var(--ok); }
+  button.quit { background: none; border: 1px solid var(--edge); color: var(--dim); border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+  button.quit:hover { color: var(--text); border-color: var(--dim); }
+
+  /* ---- the console itself: everything is placed by % of the panel, measured from the hardware ---- */
+  .wrap { padding: 14px 18px 6px; }
+  .frame { background: linear-gradient(#77787a, #5d5e60); border-radius: 1.4cqw; padding: 1.6cqw 1.6cqw 2.2cqw; container-type: inline-size; }
+  .panel { position: relative; aspect-ratio: 3.18 / 1; background: var(--face); border-radius: .6cqw;
+           container-type: inline-size; color: var(--line); font-size: 1.05cqw; line-height: 1.1; }
+  .abs { position: absolute; transform: translate(-50%, -50%); text-align: center; }
+  .hdr { position: absolute; font-size: 1cqw; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+  .box { position: absolute; border: .12cqw solid #b9b4ab; border-bottom: none; border-radius: .9cqw .9cqw 0 0; }
+  .knob { width: 6.4cqw; }
+  .knob svg { width: 4.4cqw; height: 4.4cqw; display: block; margin: 0 auto; }
+  .knob.big svg { width: 5.8cqw; height: 5.8cqw; }
+  .knob .l { font-size: .95cqw; margin-top: .1cqw; white-space: nowrap; }
+  .knob .v { font-size: .9cqw; color: var(--amber); font-variant-numeric: tabular-nums; min-height: 1cqw; white-space: nowrap; }
+  .knob.miss .l { color: #6a6c6f; }  .knob.miss .v { visibility: hidden; }
+  .knob.send .v, .knob.send .l { color: var(--send); }
+  .btn { width: 1.6cqw; height: 1.6cqw; border-radius: 50%; background: #4a4844; box-shadow: inset 0 0 0 .1cqw #2e2d2b; }
+  .btn.dim { background: #8a7f6c; }
+  .btn.on  { background: #fff3d6; box-shadow: 0 0 .9cqw #ffd88a; }
+  .btn.send { background: var(--send); box-shadow: 0 0 .9cqw var(--send); animation: blink .8s steps(1) infinite; }
+  .btn.grp { background: #c9a6ff; box-shadow: 0 0 .8cqw #c9a6ff; }
+  .btn.click { cursor: pointer; }
+  .side { position: absolute; transform: translateY(-50%); display: flex; align-items: center; gap: .6cqw; font-size: .95cqw; white-space: nowrap; }
+  .lab { position: absolute; transform: translateX(-50%); font-size: .85cqw; white-space: nowrap; }
+  .tri { position: absolute; transform: translateY(-50%); font-size: .8cqw; line-height: 1.25; }
+  .tri div::before { content: ""; display: inline-block; width: .55cqw; height: .55cqw; border-radius: 50%; background: #4a4844; margin-right: .4cqw; }
+  .vmeter { position: absolute; display: flex; gap: .25cqw; transform: translateX(-50%); }
+  .vmeter .col { width: .55cqw; height: 100%; background: #2a2b2d; border-radius: .2cqw; position: relative; overflow: hidden; }
+  .vmeter .col i { position: absolute; left: 0; right: 0; bottom: 0; height: 0;
+                   background: linear-gradient(0deg, #59c27a 0 70%, #e6c84a 70% 88%, #e0574f 88%); background-size: 100% 9.8cqw; background-position: bottom; }
+  .hmeter { position: absolute; height: .55cqw; background: #2a2b2d; border-radius: .2cqw; overflow: hidden; }
+  .hmeter i { display: block; height: 100%; width: 0; margin-left: auto; background: #e04a3a; }
+  .shift { position: absolute; transform: translate(-50%, -50%); width: 2.4cqw; height: 2.4cqw; border-radius: 50%; border: .3cqw solid #d9a12c; }
+  .bigring { position: absolute; transform: translate(-50%, -50%); width: 6.6cqw; height: 6.6cqw; border-radius: 50%; border: .25cqw solid #d9a12c; pointer-events: none; }
+  .brand { position: absolute; left: 7%; top: 1.5%; font-size: 1.3cqw; font-weight: 600; color: #ddd; }
+
+  /* ---- under the console: names for the 20 track buttons, then the log ---- */
+  .names { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px 6px; padding: 10px 18px 6px; }
+  .names .t { display: flex; gap: 6px; align-items: center; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--edge);
+              color: var(--dim); cursor: pointer; font-size: 12px; min-width: 0; }
+  .names .t span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .names .t b { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text); }
+  .names .t.sel { border-color: var(--amber); color: var(--text); background: #2a2116; }
+  .names .t.grp { border-color: #c9a6ff; color: var(--text); }
+  .names .t.none { visibility: hidden; }
+  .names .m { color: #e6c84a; } .names .s { color: #6fc3f0; }
+  .faders { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px 6px; padding: 4px 18px 6px; }
+  .faders .f { padding: 4px 6px; border-radius: 6px; border: 1px solid var(--edge); font-size: 11px; color: var(--dim);
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .faders .f b { color: var(--text); font-weight: 600; } .faders .f i { font-style: normal; float: right; }
+  .faders .f.focus { border-color: #6fc3f0; } .faders .f.touch { background: #1f2a1f; border-color: #7fd17f; }
+  .faders .f.none { visibility: hidden; }
+  .faders .m { color: #e6c84a; } .faders .s { color: #6fc3f0; }
+  .bankinfo { padding: 0 18px; color: var(--dim); font-size: 11px; }
+  footer { border-top: 1px solid var(--edge); margin-top: 8px; padding: 8px 18px; color: var(--dim);
+           font: 11px/1.5 ui-monospace, Menlo, monospace; max-height: 110px; overflow: hidden; }
+  .note { position: absolute; left: 50%; bottom: 1.5%; transform: translateX(-50%); font-size: .9cqw; color: var(--amber); }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="track">—</h1>
+  <span id="bM" class="badge">MUTE</span>
+  <span id="bS" class="badge">SOLO</span>
+  <span id="bP" class="badge">Ø</span>
+  <span id="bA" class="badge warn" hidden>VOLUME AUTOMATION — set track to Off to use the knob</span>
+  <span id="bL" class="badge layer" hidden>SEND LAYER</span>
+  <span id="bG" class="badge group" hidden>GROUP</span>
+  <div class="status">
+    <span><span id="dSC" class="dot"></span>SoundCraft</span>
+    <span><span id="dC1" class="dot"></span>Console 1</span>
+  </div>
+  <button class="quit" onclick="quitApp()">Quit controller</button>
+</header>
+<div class="wrap"><div class="frame"><div class="panel" id="panel"></div></div></div>
+<div class="bankinfo" id="bankinfo"></div>
+<div class="names" id="names"></div>
+<div class="bankinfo" id="faderinfo"></div>
+<div class="faders" id="faders"></div>
+<footer id="log"></footer>
+<script>
+// Positions are % of the panel (left, top), measured from a photo of the Console 1 mk1.
+const KNOBS = {
+  "High Cut": [12.3, 37.8], "Low Cut": [12.3, 62.2], "Input Gain": [4.9, 73.3, "Input Gain"],
+  "Gate": [22.4, 51.1], "Gate Release": [30.1, 36.9], "Sustain": [30.1, 62.2], "Punch": [30.1, 86.7],
+  "Low Mid Q": [46.6, 38.7, "Q"], "High Mid Q": [54.3, 38.7, "Q"],
+  "Low Freq": [38.9, 62.2, "Frequency"], "Low Mid Freq": [46.6, 62.2, "Frequency"],
+  "High Mid Freq": [54.3, 62.2, "Frequency"], "High Freq": [62.0, 62.2, "Frequency"],
+  "Low Gain": [38.9, 86.7], "Low Mid Gain": [46.6, 86.7], "High Mid Gain": [54.3, 86.7], "High Gain": [62.0, 86.7],
+  "Ratio": [70.3, 51.1], "Attack": [78.0, 36.9], "Release": [78.0, 62.2],
+  "Wet/Dry": [70.3, 73.3, "Parallel Dry/Wet"], "Threshold": [78.0, 86.7],
+  "Drive": [87.1, 36.9], "Drive Character": [87.1, 62.2, "Character"], "Pan": [87.1, 86.7],
+  "Volume": [94.7, 85.3, "Volume", true],
+};
+const EQ_KNOBS = new Set(["Low Mid Q","High Mid Q","Low Freq","Low Mid Freq","High Mid Freq","High Freq","Low Gain","Low Mid Gain","High Mid Gain","High Gain"]);
+const SECTION_OF = k => ["Gate","Gate Release","Sustain","Punch"].includes(k) ? "gate" : EQ_KNOBS.has(k) ? "eq"
+  : ["Ratio","Attack","Release","Wet/Dry","Threshold"].includes(k) ? "comp" : ["Drive","Drive Character"].includes(k) ? "drive" : null;
+const TRACK_X = i => 26.3 + i * 2.537;
+
+const R = 19, C = 2 * Math.PI * R, SWEEP = 0.75;   // 270° ring with a single dot, like the hardware
+function ring(v, col) {
+  const pos = (v / 127) * SWEEP * C, dot = 3.4;
+  const start = Math.min(Math.max(pos - dot / 2, 0), SWEEP * C - dot);
+  return `<svg viewBox="0 0 48 48"><g transform="rotate(135 24 24)">
+    <circle cx="24" cy="24" r="${R}" fill="none" stroke="#3a3936" stroke-width="3.5" stroke-dasharray="1.2 2.2" />
+    ${v == null ? "" : `<circle cx="24" cy="24" r="${R}" fill="none" stroke="${col}" stroke-width="5"
+      stroke-dasharray="${dot} ${C}" stroke-dashoffset="${-start}" stroke-linecap="round"/>`}</g>
+    <circle cx="24" cy="24" r="13" fill="#0c0c0d" stroke="#262628" stroke-width="1.5"/></svg>`;
+}
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const at = (l, t) => `left:${l}%;top:${t}%`;
+const btn = (l, t, cls = "", extra = "") => `<div class="abs btn ${cls}" style="${at(l, t)}" ${extra}></div>`;
+const side = (l, t, cls, text, sub = "") => `<div class="side" style="left:${l - .8}%;top:${t}%"><div class="btn ${cls}"></div><div>${text}${sub ? `<div style="color:#d9a12c;font-size:.75cqw">${sub}</div>` : ""}</div></div>`;
+const lab = (l, t, text) => `<div class="lab" style="${at(l, t)}">${text}</div>`;
+
+function render(s) {
+  document.getElementById("dSC").className = "dot" + (s.soundcraft ? " ok" : "");
+  document.getElementById("dC1").className = "dot" + (s.console1 ? " ok" : "");
+  document.getElementById("track").textContent = s.track
+      ? s.track + (s.group_size > 1 ? `  + ${s.group_size - 1} more` : "") : "No track selected";
+  const bG = document.getElementById("bG");
+  bG.hidden = !(s.group || s.group_size > 1);
+  bG.textContent = s.group ? "GROUP — tap track buttons to add/remove" : "GROUP";
+  const flag = (id, on) => document.getElementById(id).classList.toggle("on", !!on);
+  flag("bM", s.mute); flag("bS", s.solo); flag("bP", s.phase);
+  document.getElementById("bA").hidden = !s.automated;
+  document.getElementById("bL").hidden = !s.layer;
+
+  const sec = s.sections || {}, on = k => sec[k] === "on", have = !!s.track;
+  const bank = s.bank || 0, tracks = s.tracks || [], mv = s.meters || {};
+  let h = "";
+
+  // top row: Display, Page, Select Track 1-20, Track Group/Copy, Order, External Sidechain
+  h += `<div class="hdr" style="left:2.5%;top:3%">Display</div>` + lab(3.5, 8.5, "On") + lab(6, 8.5, "Mode")
+     + btn(3.5, 14.2) + btn(6, 14.2);
+  h += `<div class="hdr" style="left:18.3%;top:3%">Page</div>` + lab(18.9, 8.5, "–") + lab(21.3, 8.5, "+")
+     + btn(18.9, 14.2) + btn(21.3, 14.2);
+  h += `<div class="hdr" style="left:50.4%;top:3%;transform:translateX(-50%)">Select Track</div>`;
+  for (let i = 0; i < 20; i++) {
+    const t = tracks[bank * 20 + i];
+    const cls = !t ? "" : t.selected ? "on" : t.grouped ? "grp" : "dim";
+    h += lab(TRACK_X(i), 8.5, bank * 20 + i + 1)
+       + btn(TRACK_X(i), 14.2, cls + (t ? " click" : ""), t ? `title="${esc(t.name)}" onclick="pick(${bank * 20 + i})"` : "");
+  }
+  h += `<div class="hdr" style="left:79.4%;top:3%">Track</div>` + lab(79.7, 8.5, "Group") + lab(82.2, 8.5, "Copy")
+     + btn(79.7, 14.2, s.group ? "grp" : "") + btn(82.2, 14.2);
+  h += `<div class="tri" style="left:85.3%;top:8%"><div>EQ › S › C</div><div>S › C › EQ</div><div>S › EQ › C</div></div>`
+     + btn(86.3, 17.5) + lab(89.4, 15.6, "Order");
+  h += `<div class="tri" style="left:91.2%;top:7%"><div>To Shape</div><div>To Comp</div><div>Off</div></div>`
+     + side(92.3, 17.8, "", "External<br>Sidechain");
+
+  // section outlines + header buttons
+  h += `<div class="box" style="left:17.6%;top:22%;width:16.6%;height:78%"></div>`
+     + `<div class="box" style="left:34.4%;top:22%;width:31.2%;height:78%"></div>`
+     + `<div class="box" style="left:65.8%;top:22%;width:17.4%;height:78%"></div>`
+     + `<div class="box" style="left:83.6%;top:30%;width:.1%;height:62%;border-radius:0;border-width:0 0 0 .12cqw"></div>`;
+  const secBtn = (k) => s.layer && k === "eq" ? "send" : on(k) ? "on" : "";
+  const st = k => { if (!have) return ""; if (s.layer && k === "eq") return "sends";
+    const v = sec[k] || "missing"; return v === "missing" ? "not added" : v === "on" ? "" : v; };
+  const tag = k => st(k) ? ` <span style="font-weight:400;color:var(--amber);font-size:.8cqw">${st(k)}</span>` : "";
+  h += side(18.9, 27.6, secBtn("gate"), "<b>SHAPE</b>" + tag("gate")) + side(35.4, 27.6, secBtn("eq"), `<b>${s.layer ? "SENDS" : "EQUALIZER"}</b>` + tag("eq"))
+     + side(67.1, 27.6, secBtn("comp"), "<b>COMPRESSOR</b>" + tag("comp"));
+  if (have && sec.drive && sec.drive !== "on") h += lab(87.1, 24.5, `<span style="color:var(--amber)">drive ${sec.drive === "missing" ? "not added" : sec.drive}</span>`);
+
+  // meters: input/output (vertical L/R), gate and compressor reduction (horizontal)
+  const vm = (l, a, b) => `<div class="vmeter" style="left:${l}%;top:24%;height:31%">
+     <div class="col"><i style="height:${Math.round((a || 0) * 100)}%"></i></div><div class="col"><i style="height:${Math.round((b || 0) * 100)}%"></i></div></div>`;
+  h += vm(4.5, mv.input_l, mv.input_r) + vm(95.8, mv.output_l, mv.output_r);
+  h += `<div class="hmeter" style="left:27.3%;top:23.3%;width:5.8%"><i style="width:${Math.round((mv.gate || 0) * 100)}%"></i></div>`
+     + `<div class="hmeter" style="left:72%;top:23.3%;width:6%"><i style="width:${Math.round((mv.comp || 0) * 100)}%"></i></div>`;
+  if (s.meters_available === false) h += `<div class="note">Meters need our SoundCraft build (with live meters)</div>`;
+
+  // knobs
+  for (const [key, [l, t, label, big]] of Object.entries(KNOBS)) {
+    const k = (s.knobs || {})[key];
+    const sk = SECTION_OF(key), isSend = s.layer && sk === "eq";
+    const missing = !have || !k || (sk && !isSend && sec[sk] === "missing");
+    let name = label || key;
+    if (k && isSend) name = k.name;
+    if (key === "Pan" && s.stereo) name = "Width";
+    h += `<div class="abs knob${big ? " big" : ""}${missing ? " miss" : ""}${isSend ? " send" : ""}" style="${at(l, t + 3.2)}">
+      ${ring(k && !missing ? k.ring : null, isSend ? "var(--send)" : "var(--amber)")}
+      <div class="l">${esc(name)}</div><div class="v">${esc(k ? k.value : "")}</div></div>`;
+  }
+  h += `<div class="bigring" style="${at(94.7, 85.3 - 1.2)}"></div>`;
+
+  // EQ band-type switches (Cut / Bell / Shelf)
+  const cbs = `<div>Cut</div><div>Bell</div><div>Shelf</div>`;
+  h += btn(35.6, 43.6) + `<div class="tri" style="left:37.2%;top:43.6%">${cbs}</div>`
+     + btn(59, 43.6) + `<div class="tri" style="left:60.6%;top:43.6%">${cbs}</div>`;
+
+  // other buttons
+  h += side(22.4, 73.3, "", "Hard Gate");
+  h += side(10.5, 78.7, "", "Filters to<br>Compressor") + side(10.5, 86.7, s.phase ? "on" : "", "Phase Inv.")
+     + side(10.5, 94.7, "", "Preset");
+  h += `<div class="shift" style="${at(2.5, 94.7)}"></div>` + `<div class="lab" style="left:7%;top:93%">Shift</div>`;
+  h += btn(92.7, 66, s.solo ? "on" : "") + lab(92.7, 69.5, "Solo") + btn(96.8, 66, s.mute ? "on" : "") + lab(96.8, 69.5, "Mute");
+
+  document.getElementById("panel").innerHTML = h;
+
+  // names under the console for the 20 buttons of this bank
+  const pages = Math.max(1, Math.ceil(tracks.length / 20));
+  document.getElementById("bankinfo").textContent = `Track buttons — bank ${bank + 1} of ${pages} (Page – / + to change)`;
+  let n = "";
+  for (let i = 0; i < 20; i++) {
+    const idx = bank * 20 + i, t = tracks[idx];
+    n += t ? `<div class="t${t.selected ? " sel" : ""}${t.grouped ? " grp" : ""}" onclick="pick(${idx})"><b>${idx + 1}</b>
+      <span>${esc(t.name)}${t.mute ? ' <span class="m">M</span>' : ""}${t.solo ? ' <span class="s">S</span>' : ""}</span></div>`
+      : `<div class="t none"></div>`;
+  }
+  document.getElementById("names").innerHTML = n;
+  const F = s.fader, fi = document.getElementById("faderinfo"), fd = document.getElementById("faders");
+  if (!F) { fi.textContent = ""; fd.innerHTML = ""; }
+  else {
+    fi.textContent = `Fader — ${F.view === "layer" ? "LAYER (" + F.layer_size + " tracks)" : "bank"}, page ${F.page + 1}`
+      + (F.focus ? `, focus: ${F.focus}` : "") + "   ·   Shift+Select = focus · hold Layer+Select = add to layer · tap Layer = flip";
+    fd.innerHTML = F.slots.map((t, i) => !t ? `<div class="f none"></div>` :
+      `<div class="f${t.focus && i === 9 ? " focus" : ""}${t.touched ? " touch" : ""}"><b>${i + 1}</b> ${esc(t.name)}`
+      + `<i>${t.db <= -140 ? "-inf" : (t.db > 0 ? "+" : "") + t.db.toFixed(1)}${t.mute ? ' <span class="m">M</span>' : ""}${t.solo ? ' <span class="s">S</span>' : ""}</i></div>`).join("");
+  }
+  document.getElementById("log").innerHTML = (s.log || []).slice(-6).map(esc).join("<br>");
+}
+async function tick() {
+  try { render(await (await fetch("/state")).json()); }
+  catch (e) { document.getElementById("dSC").className = "dot"; document.getElementById("dC1").className = "dot";
+              document.getElementById("track").textContent = "Controller not running"; }
+  setTimeout(tick, 150);
+}
+function pick(i) { fetch("/select/" + i, {method: "POST"}); }
+function quitApp() { fetch("/quit", {method: "POST"}).then(() => document.getElementById("track").textContent = "Controller stopped"); }
+tick();
+</script>
+</body>
+</html>

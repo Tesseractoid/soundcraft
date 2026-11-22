@@ -1,0 +1,769 @@
+{
+  "device_in": "Console 1",
+  "device_out": "Console 1",
+  "controls": {
+    "cc:0:58": {
+      "label": "Preset",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=58 value=127 time=0"
+    },
+    "cc:0:108": {
+      "label": "Phase Inv",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=108 value=127 time=0"
+    },
+    "cc:0:61": {
+      "label": "Filter To Compressor",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=61 value=127 time=0"
+    },
+    "cc:0:107": {
+      "label": "Input Gain",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21
+      ],
+      "example": "control_change channel=0 control=107 value=3 time=0"
+    },
+    "cc:0:103": {
+      "label": "Low Cut",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18
+      ],
+      "example": "control_change channel=0 control=103 value=3 time=0"
+    },
+    "cc:0:105": {
+      "label": "High Cut",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21
+      ],
+      "example": "control_change channel=0 control=105 value=3 time=0"
+    },
+    "cc:0:104": {
+      "label": "Display Auto",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=104 value=127 time=0"
+    },
+    "cc:0:102": {
+      "label": "Display On",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=102 value=127 time=0"
+    },
+    "cc:0:53": {
+      "label": "Shape",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=53 value=127 time=0"
+    },
+    "cc:0:59": {
+      "label": "Hard Gate",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=59 value=127 time=0"
+    },
+    "cc:0:57": {
+      "label": "Punch",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27,
+        30,
+        33
+      ],
+      "example": "control_change channel=0 control=57 value=3 time=0"
+    },
+    "cc:0:55": {
+      "label": "Sustain",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27,
+        30
+      ],
+      "example": "control_change channel=0 control=55 value=3 time=0"
+    },
+    "cc:0:54": {
+      "label": "Gate",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27
+      ],
+      "example": "control_change channel=0 control=54 value=3 time=0"
+    },
+    "cc:0:56": {
+      "label": "Gate Release",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27,
+        30,
+        33
+      ],
+      "example": "control_change channel=0 control=56 value=3 time=0"
+    },
+    "cc:0:80": {
+      "label": "Equalizer",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=80 value=127 time=0"
+    },
+    "cc:0:91": {
+      "label": "Low Gain",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24
+      ],
+      "example": "control_change channel=0 control=91 value=3 time=0"
+    },
+    "cc:0:88": {
+      "label": "Low Mid Gain",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21
+      ],
+      "example": "control_change channel=0 control=88 value=3 time=0"
+    },
+    "cc:0:85": {
+      "label": "High Mid Gain",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27,
+        30,
+        33,
+        36,
+        39,
+        42
+      ],
+      "example": "control_change channel=0 control=85 value=3 time=0"
+    },
+    "cc:0:82": {
+      "label": "High Gain",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27,
+        30,
+        33,
+        36,
+        39
+      ],
+      "example": "control_change channel=0 control=82 value=3 time=0"
+    },
+    "cc:0:92": {
+      "label": "Low Freq",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24
+      ],
+      "example": "control_change channel=0 control=92 value=3 time=0"
+    },
+    "cc:0:89": {
+      "label": "Low Mid Freq",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27
+      ],
+      "example": "control_change channel=0 control=89 value=3 time=0"
+    },
+    "cc:0:86": {
+      "label": "High Mid Freq",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27
+      ],
+      "example": "control_change channel=0 control=86 value=3 time=0"
+    },
+    "cc:0:83": {
+      "label": "High Freq",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27,
+        30
+      ],
+      "example": "control_change channel=0 control=83 value=3 time=0"
+    },
+    "cc:0:90": {
+      "label": "Low Mid Q",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27,
+        30
+      ],
+      "example": "control_change channel=0 control=90 value=3 time=0"
+    },
+    "cc:0:87": {
+      "label": "High Mid Q",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27,
+        30,
+        33,
+        36
+      ],
+      "example": "control_change channel=0 control=87 value=3 time=0"
+    },
+    "cc:0:93": {
+      "label": "Low Eq Type",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        63,
+        127
+      ],
+      "example": "control_change channel=0 control=93 value=63 time=0"
+    },
+    "cc:0:65": {
+      "label": "High Eq Type",
+      "kind_guess": "relative encoder (offset 64)",
+      "values_seen": [
+        63
+      ],
+      "example": "control_change channel=0 control=65 value=63 time=0"
+    },
+    "cc:0:46": {
+      "label": "Compressor",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=46 value=127 time=0"
+    },
+    "cc:0:47": {
+      "label": "Threshold",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27
+      ],
+      "example": "control_change channel=0 control=47 value=3 time=0"
+    },
+    "cc:0:50": {
+      "label": "Wet/Dry",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27,
+        30,
+        33,
+        36
+      ],
+      "example": "control_change channel=0 control=50 value=3 time=0"
+    },
+    "cc:0:48": {
+      "label": "Release",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27,
+        30,
+        33,
+        36,
+        39,
+        42
+      ],
+      "example": "control_change channel=0 control=48 value=3 time=0"
+    },
+    "cc:0:49": {
+      "label": "Ratio",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        0,
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24
+      ],
+      "example": "control_change channel=0 control=49 value=3 time=0"
+    },
+    "cc:0:51": {
+      "label": "Attack",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27,
+        30,
+        33,
+        36,
+        39,
+        42,
+        45,
+        48,
+        51,
+        54,
+        57,
+        60
+      ],
+      "example": "control_change channel=0 control=51 value=3 time=0"
+    },
+    "cc:0:10": {
+      "label": "Pan",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27,
+        30
+      ],
+      "example": "control_change channel=0 control=10 value=3 time=0"
+    },
+    "cc:0:18": {
+      "label": "Drive Character",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27,
+        30,
+        33,
+        36,
+        39
+      ],
+      "example": "control_change channel=0 control=18 value=3 time=0"
+    },
+    "cc:0:15": {
+      "label": "Drive",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27,
+        30
+      ],
+      "example": "control_change channel=0 control=15 value=3 time=0"
+    },
+    "cc:0:13": {
+      "label": "Solo",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=13 value=127 time=0"
+    },
+    "cc:0:12": {
+      "label": "Mute",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=12 value=127 time=0"
+    },
+    "cc:0:97": {
+      "label": "Page Down",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=97 value=127 time=0"
+    },
+    "cc:0:96": {
+      "label": "Page Up",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=96 value=127 time=0"
+    },
+    "cc:0:21": {
+      "label": "1",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=21 value=127 time=0"
+    },
+    "cc:0:22": {
+      "label": "2",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=22 value=127 time=0"
+    },
+    "cc:0:23": {
+      "label": "3",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=23 value=127 time=0"
+    },
+    "cc:0:24": {
+      "label": "4",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=24 value=127 time=0"
+    },
+    "cc:0:25": {
+      "label": "5",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=25 value=127 time=0"
+    },
+    "cc:0:26": {
+      "label": "6",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        0
+      ],
+      "example": "control_change channel=0 control=26 value=0 time=0"
+    },
+    "cc:0:27": {
+      "label": "7",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=27 value=127 time=0"
+    },
+    "cc:0:28": {
+      "label": "8",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=28 value=127 time=0"
+    },
+    "cc:0:29": {
+      "label": "9",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=29 value=127 time=0"
+    },
+    "cc:0:30": {
+      "label": "10",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=30 value=127 time=0"
+    },
+    "cc:0:31": {
+      "label": "11",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=31 value=127 time=0"
+    },
+    "cc:0:32": {
+      "label": "12",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=32 value=127 time=0"
+    },
+    "cc:0:33": {
+      "label": "13",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=33 value=127 time=0"
+    },
+    "cc:0:34": {
+      "label": "14",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=34 value=127 time=0"
+    },
+    "cc:0:35": {
+      "label": "15",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=35 value=127 time=0"
+    },
+    "cc:0:36": {
+      "label": "16",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=36 value=127 time=0"
+    },
+    "cc:0:37": {
+      "label": "17",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=37 value=127 time=0"
+    },
+    "cc:0:38": {
+      "label": "18",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=38 value=127 time=0"
+    },
+    "cc:0:39": {
+      "label": "19",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=39 value=127 time=0"
+    },
+    "cc:0:40": {
+      "label": "20",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=40 value=127 time=0"
+    },
+    "cc:0:123": {
+      "label": "All",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=123 value=127 time=0"
+    },
+    "cc:0:120": {
+      "label": "Group",
+      "kind_guess": "button (cc 0/127)",
+      "values_seen": [
+        127
+      ],
+      "example": "control_change channel=0 control=120 value=127 time=0"
+    },
+    "cc:0:14": {
+      "label": "Order",
+      "kind_guess": "relative encoder (offset 64)",
+      "values_seen": [
+        63
+      ],
+      "example": "control_change channel=0 control=14 value=63 time=0"
+    },
+    "cc:0:17": {
+      "label": "External Sidechain",
+      "kind_guess": "relative encoder (offset 64)",
+      "values_seen": [
+        63
+      ],
+      "example": "control_change channel=0 control=17 value=63 time=0"
+    },
+    "cc:0:7": {
+      "label": "Volume",
+      "kind_guess": "absolute knob",
+      "values_seen": [
+        12,
+        15,
+        18,
+        21,
+        24,
+        27,
+        30,
+        33,
+        36,
+        39
+      ],
+      "example": "control_change channel=0 control=7 value=12 time=0"
+    }
+  }
+}
