@@ -15,7 +15,7 @@ if [ ! -f "$APP/Contents/MacOS/soundcraft" ] || [ "$BIN" -nt "$APP/Contents/MacO
   /usr/bin/plutil -replace CFBundleIdentifier -string ai.storyteller.soundcraft.console1 "$APP/Contents/Info.plist"
   /usr/bin/plutil -replace CFBundleDisplayName -string "SoundCraft (Console 1)" "$APP/Contents/Info.plist"
   /usr/bin/plutil -replace CFBundleName -string "SoundCraft" "$APP/Contents/Info.plist"
-  ICON=/Applications/SoundCraft.app/Contents/Resources/SoundCraft.icns
+  ICON="$DIR/../assets/app-icon/soundcraft.icns"   # from the repo, so the official app isn't needed
   [ -f "$ICON" ] && cp "$ICON" "$APP/Contents/Resources/SoundCraft.icns"
   cp "$BIN" "$APP/Contents/MacOS/soundcraft"
   codesign --force --deep --sign - "$APP" 2>/dev/null
