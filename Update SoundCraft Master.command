@@ -28,11 +28,16 @@ run bash console1/make_app.sh || fail "making the SoundCraft (Console 1) app"
 say "    -> ~/Applications/SoundCraft (Console 1).app"
 
 say "2/3 Building AK 4K EQ"
-( cd plugins/ak-4k-eq && run cargo xtask bundle ak_4k_eq --release ) || fail "AK 4K EQ build"
+# The plug-in's bundler always uses the top-most Cargo.toml it can find, which inside this repo
+# is SoundCraft's. So it's built from a copy outside the repo (kept, so rebuilds stay quick).
+EQB="$HOME/Library/Caches/ak-4k-eq-build"
+mkdir -p "$EQB"
+rsync -a --delete --exclude target --exclude build-log.txt plugins/ak-4k-eq/ "$EQB/" || fail "copying AK 4K EQ"
+( cd "$EQB" && run cargo xtask bundle ak_4k_eq --release ) || fail "AK 4K EQ build"
 mkdir -p "$HOME/Library/Audio/Plug-Ins/CLAP" "$HOME/Library/Audio/Plug-Ins/VST3"
 rm -rf "$HOME/Library/Audio/Plug-Ins/CLAP/AK 4K EQ.clap" "$HOME/Library/Audio/Plug-Ins/VST3/AK 4K EQ.vst3"
-cp -R "plugins/ak-4k-eq/target/bundled/AK 4K EQ.clap" "$HOME/Library/Audio/Plug-Ins/CLAP/" || fail "installing AK 4K EQ"
-cp -R "plugins/ak-4k-eq/target/bundled/AK 4K EQ.vst3" "$HOME/Library/Audio/Plug-Ins/VST3/" || fail "installing AK 4K EQ"
+cp -R "$EQB/target/bundled/AK 4K EQ.clap" "$HOME/Library/Audio/Plug-Ins/CLAP/" || fail "installing AK 4K EQ"
+cp -R "$EQB/target/bundled/AK 4K EQ.vst3" "$HOME/Library/Audio/Plug-Ins/VST3/" || fail "installing AK 4K EQ"
 say "    -> installed (CLAP + VST3)"
 
 say "3/3 Console 1 controller packages"
