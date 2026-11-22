@@ -12,6 +12,12 @@ CPID=""; STARTED=0; WAIT=4
 present() { "$PY" -c "import mido,sys; sys.exit(0 if any('Console 1' in n for n in mido.get_output_names()) else 1)" 2>/dev/null; }
 others()  { pgrep -f "bridge/main.py" >/dev/null || pgrep -f pt_adaptor.py >/dev/null || pgrep -f Console1OSD_APP >/dev/null; }
 
+# A controller left over from an earlier SoundCraft session would keep running old settings:
+# stop it so a fresh one starts with the current map.
+if pgrep -f console1_soundcraft.py >/dev/null; then
+  pkill -TERM -f console1_soundcraft.py; sleep 2
+  pkill -KILL -f console1_soundcraft.py 2>/dev/null || true
+fi
 sleep 3   # give SoundCraft a moment to open its control port
 while kill -0 "$PARENT" 2>/dev/null; do
   if [ -n "$CPID" ] && ! kill -0 "$CPID" 2>/dev/null; then
@@ -27,6 +33,10 @@ while kill -0 "$PARENT" 2>/dev/null; do
   fi
   sleep "$WAIT"; WAIT=4
 done
-# SoundCraft has quit: stop our controller tidily (Ctrl-C style, so it turns the LEDs off).
-[ -n "$CPID" ] && kill -INT "$CPID" 2>/dev/null
+# SoundCraft has quit: stop our controller tidily (it turns the LEDs off on TERM).
+# (Background jobs ignore Ctrl-C/INT, which is why this is TERM.)
+if [ -n "$CPID" ]; then
+  kill -TERM "$CPID" 2>/dev/null
+  sleep 2; kill -KILL "$CPID" 2>/dev/null
+fi
 exit 0

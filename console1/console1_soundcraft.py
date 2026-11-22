@@ -994,7 +994,14 @@ def other_owner():
     return None
 
 
+def _stop_on_signal(*_):
+    raise KeyboardInterrupt   # same tidy shutdown as Ctrl-C (LEDs off, "Stopped.")
+
+
 if __name__ == "__main__":
+    import signal
+    signal.signal(signal.SIGTERM, _stop_on_signal)
+    signal.signal(signal.SIGINT, signal.default_int_handler)   # background starts ignore Ctrl-C otherwise
     _why = other_owner()
     if _why:
         sys.exit(_why)
