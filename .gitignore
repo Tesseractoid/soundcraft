@@ -13,3 +13,5 @@ plans/
 
 # Master build log
 /update-log.txt
+# SoundCraft sessions saved inside the repo folder: keep them local, never push audio
+/sessions/
