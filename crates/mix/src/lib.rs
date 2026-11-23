@@ -599,6 +599,8 @@ impl MixEngine {
     fn route_strip(&mut self, t: &Track, strip: &mut Strip, pos: Samples, frames: usize) {
         let m = self.meters.entry(t.id).or_default();
         m.measure(&strip.buf, frames, strip.gr);
+        m.input_peak = strip.input_peak;
+        m.insert_gain_reduction_db = strip.insert_gr;
         m.plugin_failures = strip.failures;
         let src_fmt = strip_format(t, strip.buf.len());
         let law = self.pan_law;

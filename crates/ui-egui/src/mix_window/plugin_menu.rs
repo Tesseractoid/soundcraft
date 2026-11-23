@@ -14,6 +14,10 @@ pub fn plugin_menu(app: &mut SoundApp, ui: &mut Ui, id: TrackId, slot: usize, oc
         if ui.button("Bypass").clicked() {
             run_pick(app, ui, "mix.insert_bypass", json!({"track": id.0, "slot": slot}));
         }
+        let active = app.engine.session().track(id).and_then(|t| t.mixer.inserts.get(slot).cloned().flatten()).is_none_or(|i| i.active);
+        if ui.button(if active { "Make Inactive" } else { "Make Active" }).clicked() {
+            run_pick(app, ui, "mix.insert_active", json!({"track": id.0, "slot": slot, "value": !active}));
+        }
         if ui.button("no insert").clicked() {
             run_pick(app, ui, "mix.insert_remove", json!({"track": id.0, "slot": slot}));
         }

@@ -19,6 +19,7 @@ mod event;
 mod event_more;
 mod file;
 mod health;
+mod insert_active;
 mod instrument;
 mod midi;
 mod mix;
@@ -143,6 +144,7 @@ pub fn command_specs() -> &'static [CommandSpec] {
         v.extend(tab::specs());
         v.extend(query::specs());
         v.extend(health::specs());
+        v.extend(insert_active::specs());
         v.extend(audiosuite::specs());
         v.extend(audio_midi::specs());
         v.extend(midi::specs());

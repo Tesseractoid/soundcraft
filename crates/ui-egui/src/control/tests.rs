@@ -899,3 +899,35 @@ fn scroll_reports_the_wheel_and_trackpad_sources_after_delivery() {
     let v = reply.try_recv().expect("trackpad scroll replies after its events were applied");
     assert_eq!(v["result"]["source"], "trackpad");
 }
+
+#[test]
+fn mix_meters_reports_input_output_and_per_insert_gain_reduction() {
+    let (mut a, ctx) = (app(), egui::Context::default());
+    warm(&mut a, &ctx);
+    let kick = a.engine.session().track_by_name("Kick").expect("demo has Kick");
+    let (kick_id, comp_slot) =
+        (kick.id, kick.mixer.inserts.iter().position(|i| i.as_ref().is_some_and(|i| i.plugin == "compressor")).expect("demo Kick has a compressor"));
+    let mut m = soundcraft_mix::StripMeter { input_peak: [0.5, 0.5], peak: [0.25, 0.25], gain_reduction_db: 3.0, ..Default::default() };
+    m.insert_gain_reduction_db[comp_slot] = 3.0;
+    a.meter_snapshot.tracks.insert(kick_id, m);
+
+    let (req, _reply) = ControlRequest::new("mix.meters", json!({}));
+    let v = handle(&mut a, &ctx, &req).expect("mix.meters answers at once");
+    assert_eq!(v["ok"], true, "{v}");
+    let r = &v["result"];
+    assert_eq!(r["live"], false, "no player in tests, so nothing is live");
+    let t = r["tracks"].as_array().unwrap().iter().find(|t| t["name"] == "Kick").expect("Kick is reported");
+    assert_eq!(t["input_db"][0].as_f64(), Some(-6.0));
+    assert_eq!(t["output_db"][0].as_f64(), Some(-12.0));
+    let comp = t["inserts"].as_array().unwrap().iter().find(|i| i["slot"] == comp_slot).expect("the compressor's slot");
+    assert_eq!(comp["gain_reduction_db"].as_f64(), Some(3.0));
+    assert!(r["main"]["output_db"][0].as_f64().is_some());
+}
+
+#[test]
+fn mix_meters_reads_silence_as_minus_144_never_nan() {
+    assert_eq!(meter_db(0.0), -144.0);
+    assert_eq!(meter_db(f32::NAN), -144.0);
+    assert_eq!(meter_db(f32::INFINITY), -144.0);
+    assert_eq!(meter_db(1.0), 0.0);
+}

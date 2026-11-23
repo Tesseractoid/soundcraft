@@ -539,14 +539,22 @@ fn toggle_rows(app: &mut SoundApp, ui: &mut Ui, cx: &StripCtx<'_>, mut y: f32) -
         egui::UiBuilder::new().max_rect(Rect::from_min_size(pos2(x0, y), vec2(inner_w, 20.0))).layout(egui::Layout::left_to_right(egui::Align::Min)),
     );
     row.spacing_mut().item_spacing.x = 6.0;
+    // Input / Rec / polarity (Ø) share the first row.
+    let cw = (inner_w - 12.0) / 3.0;
     if track.kind.has_playlist() {
         let input_label = format!("Input monitoring for {}", track.name);
-        if text_toggle(&mut row, vec2(bw, 18.0), "I", track.mixer.input_monitor, t.input, &input_label).clicked() {
+        if text_toggle(&mut row, vec2(cw, 18.0), "I", track.mixer.input_monitor, t.input, &input_label).clicked() {
             let _ = app.run("mix.input_monitor", json!({"track": id.0}));
         }
         let record_label = format!("Record enable for {}", track.name);
-        if rec_toggle(&mut row, vec2(bw, 18.0), track.mixer.record_arm, &record_label).clicked() {
+        if rec_toggle(&mut row, vec2(cw, 18.0), track.mixer.record_arm, &record_label).clicked() {
             let _ = app.run("mix.record_arm", json!({"track": id.0}));
+        }
+    }
+    if track.kind != TrackKind::Master {
+        let phase_label = format!("Polarity invert for {}", track.name);
+        if text_toggle(&mut row, vec2(cw, 18.0), "Ø", track.mixer.phase_invert, t.input, &phase_label).clicked() {
+            let _ = app.run("mix.phase_invert", json!({"track": id.0}));
         }
     }
     y += 22.0;

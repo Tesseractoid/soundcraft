@@ -97,6 +97,16 @@ pub(super) fn level_icon(r: Rect) -> Rect {
     Rect::from_min_max(pos2(outer.max.x - 9.0, outer.min.y + 2.0), pos2(outer.max.x - 4.0, outer.max.y - 2.0))
 }
 
+/// Faces and text colour of a filled insert slot: bypassed slots take the bypass faces, and an
+/// inactive slot is drawn dark with dim text, so switching it out is visible in the mixer.
+pub(crate) fn slot_look(t: &Tokens, bypass: bool, active: bool, known: bool) -> ([Color32; 2], Color32) {
+    let faces = if bypass { t.slot_bypassed } else { t.slot_face };
+    if !active {
+        return ([faces[0].gamma_multiply(0.4), faces[1].gamma_multiply(0.4)], t.text_dim);
+    }
+    (faces, if known { t.text } else { t.text_dim })
+}
+
 /// Draw one insert slot. Clicking a filled slot opens its plugin window; Cmd/Ctrl-click toggles bypass.
 pub(crate) fn insert_slot(app: &mut SoundApp, ui: &mut Ui, track: &Track, slot: usize, r: Rect) {
     let t = Tokens::current();
@@ -109,8 +119,7 @@ pub(crate) fn insert_slot(app: &mut SoundApp, ui: &mut Ui, track: &Track, slot: 
     match &ins {
         None => empty_slot(ui.painter(), r, resp.hovered(), Mark::Dot),
         Some(i) => {
-            let faces = if i.bypass { t.slot_bypassed } else { t.slot_face };
-            let color = if info.is_some() { t.text } else { t.text_dim };
+            let (faces, color) = slot_look(&t, i.bypass, i.active, info.is_some());
             used_slot(ui.painter(), r, faces, Mark::Dot, name, color, None);
         }
     }
@@ -122,9 +131,29 @@ pub(crate) fn insert_slot(app: &mut SoundApp, ui: &mut Ui, track: &Track, slot: 
         }
     }
     let cmd = if ui.ctx().os().is_mac() { "⌘" } else { "Ctrl+" };
-    let tip = format!("{name}: click to open · {cmd}click to bypass · right-click to change");
+    let state = if ins.as_ref().is_some_and(|i| !i.active) { " (inactive)" } else { "" };
+    let tip = format!("{name}{state}: click to open · {cmd}click to bypass · right-click to change");
     let menu_resp = if ins.is_none() { resp.clone() } else { resp.clone().on_hover_text(tip) };
     let popup = if ins.is_none() { egui::Popup::menu(&menu_resp) } else { egui::Popup::context_menu(&menu_resp) };
     let popup = popup.close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside);
     popup.show(|ui| plugin_menu(app, ui, id, slot, ins.is_some()));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn an_inactive_insert_is_drawn_darker_with_dim_text() {
+        let t = Tokens::current();
+        let (active_faces, active_text) = slot_look(&t, false, true, true);
+        let (faces, text) = slot_look(&t, false, false, true);
+        assert_eq!(text, t.text_dim);
+        assert_ne!(text, active_text);
+        assert!(faces[0].r() <= active_faces[0].r() && faces[0] != active_faces[0], "inactive is darker");
+        // Bypass keeps its own faces; inactive darkens those too.
+        let (bypass_faces, _) = slot_look(&t, true, true, true);
+        assert_eq!(bypass_faces, t.slot_bypassed);
+        assert_ne!(slot_look(&t, true, false, true).0, t.slot_bypassed);
+    }
 }

@@ -39,7 +39,7 @@ fn track_json(e: &Engine, t: &Track, full: bool) -> Value {
         .iter()
         .enumerate()
         .filter_map(|(i, x)| {
-            x.as_ref().map(|x| json!({"slot": i, "plugin": x.plugin, "bypass": x.bypass, "params": if full { json!(x.params) } else { Value::Null }}))
+            x.as_ref().map(|x| json!({"slot": i, "plugin": x.plugin, "bypass": x.bypass, "active": x.active, "params": if full { json!(x.params) } else { Value::Null }}))
         })
         .collect();
     let sends: Vec<Value> = t
@@ -54,6 +54,7 @@ fn track_json(e: &Engine, t: &Track, full: bool) -> Value {
     let mut v = json!({
         "id": t.id, "name": t.name, "kind": t.kind.id(), "format": t.format.label(),
         "volume_db": t.mixer.volume_db, "pan": t.mixer.pan, "surround": t.mixer.surround, "mute": t.mixer.mute, "solo": t.mixer.solo,
+        "phase_invert": t.mixer.phase_invert, "trim_db": t.mixer.trim_db,
         "record_arm": t.mixer.record_arm, "input": t.mixer.input, "output": t.mixer.output,
         "automation_mode": t.mixer.automation_mode.label(), "inserts": inserts, "sends": sends,
         "clips": t.clips().iter().map(|c| clip_json(e, c)).collect::<Vec<_>>(),
@@ -155,6 +156,18 @@ pub fn session_text(e: &Engine) -> String {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn tracks_report_polarity_and_input_trim() {
+        let mut e = crate::demo::demo_engine();
+        let kick = |e: &Engine| session(e, false)["tracks"].as_array().unwrap().iter().find(|t| t["name"] == "Kick").cloned().unwrap();
+        assert_eq!(kick(&e)["phase_invert"], false);
+        assert_eq!(kick(&e)["trim_db"].as_f64(), Some(0.0));
+        e.execute("mix.phase_invert", &json!({"tracks": ["Kick"], "value": true})).unwrap();
+        e.execute("mix.trim", &json!({"tracks": ["Kick"], "db": 6.0})).unwrap();
+        assert_eq!(kick(&e)["phase_invert"], true);
+        assert_eq!(kick(&e)["trim_db"].as_f64(), Some(6.0));
+    }
 
     #[test]
     fn session_text_counts_only_audio_track_clips() {

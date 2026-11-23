@@ -8,6 +8,7 @@ use super::{
     AutoParam, BusId, ChannelFormat, MAX_CHANNELS, PanLaw, Plugin, Range, Route, Samples, Session, SourceAudio, Track, TrackId, TrackKind, Transport,
     db_to_gain,
 };
+use soundcraft_model::INSERT_SLOTS;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -45,6 +46,10 @@ pub(crate) struct Strip {
     pub(crate) chase: bool,
     pub(crate) muted: bool,
     pub(crate) gr: f32,
+    /// Peak entering the inserts (after trim), first two channels: the strip's input meter.
+    pub(crate) input_peak: [f32; 2],
+    /// Gain reduction of each insert slot this block, dB.
+    pub(crate) insert_gr: [f32; INSERT_SLOTS],
     /// Per-clip effect chains (Clip Effects) and a scratch buffer to render clips into.
     pub(crate) clip_fx: HashMap<u64, ClipFx>,
     clipbuf: Vec<Vec<f32>>,
@@ -143,6 +148,8 @@ impl Strip {
             chase: true,
             muted: false,
             gr: 0.0,
+            input_peak: [0.0; 2],
+            insert_gr: [0.0; INSERT_SLOTS],
             clip_fx: HashMap::new(),
             clipbuf: Vec::new(),
             latency: 0,
@@ -334,6 +341,7 @@ fn render_instrument(s: &Session, t: &Track, strip: &mut Strip, blk: Block, tran
 fn run_inserts(t: &Track, strip: &mut Strip, blk: Block, transport: &Transport) {
     let Block { pos, frames, .. } = blk;
     let mut gr = 0.0f32;
+    strip.insert_gr = [0.0; INSERT_SLOTS];
     let mut latency = strip.instrument.as_ref().filter(|i| !i.failed).map_or(0, |i| i.plugin.latency());
     for (i, ins) in t.mixer.inserts.iter().enumerate() {
         let (Some(ins), Some(Some(slot))) = (ins, strip.plugins.get_mut(i)) else { continue };
@@ -348,8 +356,12 @@ fn run_inserts(t: &Track, strip: &mut Strip, blk: Block, transport: &Transport) 
             continue;
         }
         latency = latency.saturating_add(slot.plugin.latency());
+        let slot_gr = slot.plugin.gain_reduction_db();
+        if let Some(g) = strip.insert_gr.get_mut(i) {
+            *g = slot_gr;
+        }
         if gr == 0.0 {
-            gr = slot.plugin.gain_reduction_db();
+            gr = slot_gr;
         }
     }
     strip.gr = gr;
@@ -422,6 +434,7 @@ pub(crate) fn process_strip(s: &Session, t: &Track, strip: &mut Strip, busses: &
             c.iter_mut().take(frames).for_each(|x| *x *= trim);
         }
     }
+    strip.input_peak = super::meter::first_two_peaks(&strip.buf, frames);
     run_inserts(t, strip, blk, &transport);
     let soloed_out = any_solo && !t.mixer.solo && !t.mixer.solo_safe && !receives_solo(s, t);
     strip.muted = t.mixer.mute || soloed_out;
